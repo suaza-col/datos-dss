@@ -65,6 +65,27 @@ suicide_huila:
         type: "character"
   updated: "2026-03-09"
 
+# Analytics: Deserción Escolar × Mortalidad por Suicidio - Suaza
+analytics_suaza:
+  id: "ANALYTICS_SUAZA"
+  names:
+    es: "Análisis de rezago: deserción escolar y mortalidad por suicidio en Suaza"
+    en: "Lag analysis: school dropout and suicide mortality in Suaza"
+  source:
+    name: "Observatorio de Salud del Huila / MEN datos.gov.co"
+  category: "health/analytics"
+  processing:
+    type: "cross_indicator"
+    script: "src/indicators/health/analytics/analytics_suaza.R"
+    depends_on: ["suicide_huila", "education_suaza"]
+  output:
+    format: ["csv", "parquet"]
+    structure: "long"
+    files:
+      - "analytics_suaza"
+      - "analytics_suaza_lags"
+  updated: "2026-03-13"
+
 # Pension Coverage by Gender Indicator
 pension_coverage_gender:
   id: "PENSION_COVERAGE_GENDER"
