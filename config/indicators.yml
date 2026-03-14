@@ -86,6 +86,37 @@ analytics_suaza:
       - "analytics_suaza_lags"
   updated: "2026-03-13"
 
+# Huila Municipal Map
+huila_map:
+  id: "HUILA_MUNICIPAL_MAP"
+  names:
+    es: "Mapa municipal de Huila - Comparación entre municipios"
+    en: "Huila Municipal Map - Inter-municipality comparison"
+  source:
+    name: "GADM (Global Administrative Areas Database)"
+    url: "https://gadm.org/"
+  category: "health/spatial"
+  processing:
+    type: "spatial"
+    script: "src/indicators/health/huila_map/huila_map.R"
+  output:
+    format: ["geojson", "csv"]
+    structure: "spatial"
+    files:
+      - "huila_municipalities"
+      - "huila_map"
+    columns:
+      - name: "NAME_2"
+        type: "character"
+        description: "Municipality name"
+      - name: "mock_value"
+        type: "integer"
+        description: "Indicator value (1-100)"
+      - name: "color"
+        type: "character"
+        description: "Hex colour code from YlOrRd palette (5 classes)"
+  updated: "2026-03-14"
+
 # Pension Coverage by Gender Indicator
 pension_coverage_gender:
   id: "PENSION_COVERAGE_GENDER"
