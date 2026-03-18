@@ -19,10 +19,9 @@ source(here("packages/data-r/R/process_indicator.R"))
 #' @return List of processing results
 #' @export
 process_all_indicators <- function(config_path = here("packages/data-r/config/indicators.yml"),
-                                  output_dir = here("outputs"),
-                                  parallel = FALSE,
-                                  max_workers = 2) {
-
+                                   output_dir = here("outputs"),
+                                   parallel = FALSE,
+                                   max_workers = 2) {
   message("🚀 Starting batch processing of all indicators...")
 
   # Load configuration
@@ -36,24 +35,26 @@ process_all_indicators <- function(config_path = here("packages/data-r/config/in
   process_single <- function(indicator_id) {
     message(glue::glue("🔄 Processing: {indicator_id}"))
 
-    tryCatch({
-      result <- process_indicator(
-        indicator_id = indicator_id,
-        config_path = config_path,
-        output_dir = output_dir
-      )
+    tryCatch(
+      {
+        result <- process_indicator(
+          indicator_id = indicator_id,
+          config_path = config_path,
+          output_dir = output_dir
+        )
 
-      message(glue::glue("✅ Completed: {indicator_id}"))
-      return(result)
-
-    }, error = function(e) {
-      message(glue::glue("❌ Failed: {indicator_id} - {e$message}"))
-      return(list(
-        indicator_id = indicator_id,
-        error = e$message,
-        processed_at = Sys.time()
-      ))
-    })
+        message(glue::glue("✅ Completed: {indicator_id}"))
+        return(result)
+      },
+      error = function(e) {
+        message(glue::glue("❌ Failed: {indicator_id} - {e$message}"))
+        return(list(
+          indicator_id = indicator_id,
+          error = e$message,
+          processed_at = Sys.time()
+        ))
+      }
+    )
   }
 
   # Process indicators
@@ -65,7 +66,6 @@ process_all_indicators <- function(config_path = here("packages/data-r/config/in
 
     results <- furrr::future_map(indicator_ids, process_single, .progress = TRUE)
     names(results) <- indicator_ids
-
   } else {
     message("🔄 Using sequential processing")
     results <- purrr::map(indicator_ids, process_single)
@@ -94,11 +94,11 @@ process_all_indicators <- function(config_path = here("packages/data-r/config/in
 #' @param output_dir Directory for outputs
 #' @return Processing results
 process_suaza_priorities <- function(output_dir = here("outputs")) {
-
   # Priority indicators for Suaza implementation
   priority_indicators <- c(
-    "chronic_malnutrition_under5",
-    "pension_coverage_gender"
+    "suicide_huila",
+    "analytics_suaza",
+    "huila_map",
     # Add more as they're configured
   )
 
@@ -122,7 +122,6 @@ process_suaza_priorities <- function(output_dir = here("outputs")) {
 #' @param results Results from batch processing
 #' @return Data frame with processing summary
 generate_processing_report <- function(results) {
-
   report <- purrr::imap_dfr(results, ~ {
     if (is.null(.x$error)) {
       # Successful processing
@@ -159,11 +158,9 @@ if (!interactive()) {
     results <- process_all_indicators()
     report <- generate_processing_report(results)
     readr::write_csv(report, here("outputs/processing_report.csv"))
-
   } else if (args[1] == "suaza") {
     # Process Suaza priorities
     results <- process_suaza_priorities()
-
   } else {
     # Process specific indicator
     indicator_id <- args[1]

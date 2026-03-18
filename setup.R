@@ -15,7 +15,7 @@ required_packages <- c(
   "renv", "here", "fs", "glue", "whisker", "janitor"
 )
 
-missing_packages <- required_packages[!required_packages %in% installed.packages()[,"Package"]]
+missing_packages <- required_packages[!required_packages %in% installed.packages()[, "Package"]]
 if (length(missing_packages) > 0) {
   install.packages(missing_packages)
 }
@@ -25,7 +25,6 @@ library(usethis)
 
 # Set up the package structure (run once)
 setup_package_structure <- function() {
-
   message("🏗️ Setting up R package structure...")
 
   # Create main R directory structure
@@ -35,7 +34,8 @@ setup_package_structure <- function() {
   # fs::dir_create("vignettes")
 
   # Create indicator directories
-  fs::dir_create("src/indicators/health/malnutrition")
+  fs::dir_create("src/indicators/health/suicide")
+  fs::dir_create("src/indicators/health/analytics")
   # fs::dir_create("src/indicators/social/employment")
   # fs::dir_create("src/indicators/environmental")
   # fs::dir_create("src/indicators/economic")
@@ -68,7 +68,6 @@ setup_package_structure <- function() {
 
 # Set up development environment
 setup_dev_environment <- function() {
-
   message("🔧 Setting up development environment...")
 
   # Document the package
@@ -89,14 +88,17 @@ setup_dev_environment <- function() {
 test_indicator <- function(indicator_id) {
   message(glue::glue("🧪 Testing indicator: {indicator_id}"))
 
-  tryCatch({
-    result <- process_indicator(indicator_id)
-    message("✅ Test passed!")
-    return(result)
-  }, error = function(e) {
-    message(glue::glue("❌ Test failed: {e$message}"))
-    return(NULL)
-  })
+  tryCatch(
+    {
+      result <- process_indicator(indicator_id)
+      message("✅ Test passed!")
+      return(result)
+    },
+    error = function(e) {
+      message(glue::glue("❌ Test failed: {e$message}"))
+      return(NULL)
+    }
+  )
 }
 
 # Run setup if this script is executed directly

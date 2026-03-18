@@ -1,0 +1,147 @@
+---
+title: "Suaza — Lagged Effects: Education & Suicide Mortality"
+format: html
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Setup
+```{r}
+library(here)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(purrr)
+```
+
+## Load data
+```{r}
+df <- read_csv(here("outputs/csv/analytics_suaza.csv"))
+#df <- read_csv(here("../../outputs/csv/analytics_suaza.csv"))
+#glimpse(df)
+```
+
+## Visual inspection first
+
+Before running correlations, plot both series together to get a feel for the data.
+```{r}
+df |>
+  select(anio, valor, desercion) |>
+  pivot_longer(-anio, names_to = "serie", values_to = "valor_serie") |>
+  ggplot(aes(x = anio, y = valor_serie, color = serie)) +
+  geom_line(linewidth = 1.2) +
+  geom_point() +
+  facet_wrap(~serie, scales = "free_y") +
+  labs(title = "Suaza — Suicide mortality vs school dropout over time")
+```
+
+## Cross-correlation across multiple lags
+```{r}
+# Compute correlations for lags 0 through 5
+suicide <- df$valor
+dropout <- df$desercion
+n <- length(suicide)
+
+lags <- 0:5
+
+correlations <- map_dfr(lags, function(lag) {
+  if (lag == 0) {
+    x <- dropout
+    y <- suicide
+  } else {
+    x <- dropout[1:(n - lag)]
+    y <- suicide[(lag + 1):n]
+  }
+
+  tibble(
+    lag = lag,
+    r = cor(x, y, use = "complete.obs"),
+    n = sum(complete.cases(cbind(x, y)))
+  )
+})
+
+correlations
+```
+```{r}
+correlations |>
+  ggplot(aes(x = lag, y = r)) +
+  geom_col(fill = "#2c7bb6", width = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_x_continuous(breaks = lags) +
+  labs(
+    title = "Cross-correlation: dropout (t) → suicide mortality (t + lag)",
+    x = "Lag (years)",
+    y = "Pearson r"
+  )
+```
+
+## Expand to all education indicators
+```{r}
+edu_vars <- c("desercion", "cobertura_bruta", "cobertura_neta",
+              "aprobacion", "reprobacion", "repitencia")
+
+all_correlations <- map_dfr(edu_vars, function(var) {
+  map_dfr(lags, function(lag) {
+    x <- df[[var]]
+    y <- df$valor
+
+    if (lag > 0) {
+      x <- x[1:(n - lag)]
+      y <- y[(lag + 1):n]
+    }
+
+    tibble(
+      indicator = var,
+      lag = lag,
+      r = cor(x, y, use = "complete.obs"),
+      n = sum(complete.cases(cbind(x, y)))
+    )
+  })
+})
+
+all_correlations
+```
+```{r}
+all_correlations |>
+  ggplot(aes(x = lag, y = r, fill = r > 0)) +
+  geom_col(width = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~indicator, ncol = 2) +
+  scale_x_continuous(breaks = lags) +
+  scale_fill_manual(values = c("#d7191c", "#2c7bb6"), guide = "none") +
+  labs(
+    title = "Cross-correlation: education indicators → suicide mortality",
+    subtitle = "Dropout, coverage, approval rates at lags 0–5 years",
+    x = "Lag (years)",
+    y = "Pearson r"
+  )
+```
+
+## Regression with strongest lag
+
+Once you identify the strongest lag visually, fit a simple model here.
+```{r}
+# Replace lag_n with whatever lag showed the strongest signal above
+lag_n <- 2
+
+df_model <- df |>
+  mutate(desercion_lagged = lag(desercion, lag_n)) |>
+  filter(!is.na(desercion_lagged))
+
+model <- lm(valor ~ desercion_lagged, data = df_model)
+summary(model)
+```
+```{r}
+df_model |>
+  ggplot(aes(x = desercion_lagged, y = valor)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "#2c7bb6") +
+  labs(
+    title = paste0("Suicide mortality ~ dropout (lag ", lag_n, " years)"),
+    x = paste0("Dropout rate (t - ", lag_n, ")"),
+    y = "Suicide mortality (per 100k)"
+  )
+```

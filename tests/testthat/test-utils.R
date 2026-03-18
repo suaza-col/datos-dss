@@ -3,8 +3,10 @@
 # ==============================
 
 test_that("normalize_text works correctly", {
-  expect_equal(normalize_text("TASA DE DESNUTRICIÓN CRÓNICA"),
-               "tasa de desnutricion cronica")
+  expect_equal(
+    normalize_text("TASA DE DESNUTRICIÓN CRÓNICA"),
+    "tasa de desnutricion cronica"
+  )
   expect_equal(normalize_text("Mujeres y Hombres"), "mujeres y hombres")
   expect_equal(normalize_text("  Multiple   Spaces  "), "multiple spaces")
 })
@@ -37,43 +39,28 @@ test_that("parse_indicator_numbers handles various formats", {
 
 # packages/data-r/tests/testthat/test-indicators.R
 
-test_that("chronic malnutrition indicator config is valid", {
-  config_path <- here::here("packages/data-r/config/indicators.yml")
+# test_that("chronic malnutrition indicator config is valid", {
+#   config_path <- here::here("packages/data-r/config/indicators.yml")
 
-  skip_if_not(file.exists(config_path), "Config file not found")
+#   skip_if_not(file.exists(config_path), "Config file not found")
 
-  config <- yaml::read_yaml(config_path)
+#   config <- yaml::read_yaml(config_path)
 
-  expect_true("chronic_malnutrition_under5" %in% names(config))
+#   expect_true("chronic_malnutrition_under5" %in% names(config))
 
-  malnut_config <- config$chronic_malnutrition_under5
+#   malnut_config <- config$chronic_malnutrition_under5
 
-  # Check required fields
-  expect_true("id" %in% names(malnut_config))
-  expect_true("names" %in% names(malnut_config))
-  expect_true("source" %in% names(malnut_config))
-  expect_true("processing" %in% names(malnut_config))
-  expect_true("output" %in% names(malnut_config))
+#   # Check required fields
+#   expect_true("id" %in% names(malnut_config))
+#   expect_true("names" %in% names(malnut_config))
+#   expect_true("source" %in% names(malnut_config))
+#   expect_true("processing" %in% names(malnut_config))
+#   expect_true("output" %in% names(malnut_config))
 
-  # Check names have both languages
-  expect_true("es" %in% names(malnut_config$names))
-  expect_true("en" %in% names(malnut_config$names))
-})
-
-test_that("pension coverage indicator config is valid", {
-  config_path <- here::here("packages/data-r/config/indicators.yml")
-
-  skip_if_not(file.exists(config_path), "Config file not found")
-
-  config <- yaml::read_yaml(config_path)
-
-  expect_true("pension_coverage_gender" %in% names(config))
-
-  pension_config <- config$pension_coverage_gender
-
-  # Check gender-specific configuration
-  expect_true("Sexo" %in% purrr::map_chr(pension_config$output$columns, "name"))
-})
+#   # Check names have both languages
+#   expect_true("es" %in% names(malnut_config$names))
+#   expect_true("en" %in% names(malnut_config$names))
+# })
 
 # Mock test for indicator processing (doesn't require internet)
 test_that("indicator processing handles missing URLs gracefully", {
