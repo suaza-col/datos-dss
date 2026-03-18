@@ -1,0 +1,238 @@
+---
+title: "Huila — Lagged Effects: Education & Suicide Mortality"
+format: html
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Setup
+```{r}
+library(here)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(purrr)
+library(jsonlite)
+library(stringi)
+```
+
+## Load and clean suicide data
+```{r}
+suicide <- read_csv(here("../../outputs/csv/suicide_huila.csv")) |>
+  filter(
+    sexo == "Total",
+    !territorio %in% c("Huila", "Nacional")
+  ) |>
+  mutate(
+    territorio = stri_trans_general(territorio, "Latin-ASCII"),
+    territorio = trimws(tolower(territorio))
+  ) |>
+  select(territorio, anio, valor)
+```
+
+## Download full education time series for all Huila municipalities
+```{r}
+#| cache: true
+
+descargar_socrata <- function(base_url, batch_size = 50000, extra_query = NULL) {
+  offset <- 0
+  batches <- list()
+  i <- 1
+  repeat {
+    url <- paste0(
+      base_url,
+      "?$limit=", batch_size,
+      "&$offset=", offset,
+      if (!is.null(extra_query)) paste0("&", extra_query) else ""
+    )
+    batch <- fromJSON(url, flatten = TRUE)
+    if (nrow(batch) == 0) break
+    batches[[i]] <- batch
+    if (nrow(batch) < batch_size) break
+    offset <- offset + batch_size
+    i <- i + 1
+  }
+  bind_rows(batches)
+}
+
+select_fields <- paste(c(
+  "a_o", "municipio",
+  "cobertura_bruta", "cobertura_neta",
+  "deserci_n", "aprobaci_n", "reprobaci_n", "repitencia"
+), collapse = ",")
+
+where_clause <- URLencode("departamento = 'Huila'", reserved = TRUE)
+extra_query <- paste0("$select=", select_fields, "&$where=", where_clause)
+
+edu_raw <- descargar_socrata(
+  "https://www.datos.gov.co/resource/nudc-7mev.json",
+  extra_query = extra_query
+)
+```
+
+## Clean and join
+```{r}
+edu <- edu_raw |>
+  mutate(
+    anio            = as.integer(a_o),
+    cobertura_bruta = as.numeric(cobertura_bruta),
+    cobertura_neta  = as.numeric(cobertura_neta),
+    desercion       = as.numeric(deserci_n),
+    aprobacion      = as.numeric(aprobaci_n),
+    reprobacion     = as.numeric(reprobaci_n),
+    repitencia      = as.numeric(repitencia),
+    territorio      = stri_trans_general(municipio, "Latin-ASCII"),
+    territorio      = trimws(tolower(territorio))
+  ) |>
+  filter(!is.na(anio)) |>
+  select(
+    territorio, anio, cobertura_bruta, cobertura_neta,
+    desercion, aprobacion, reprobacion, repitencia
+  )
+
+# Join — only years where both datasets have data
+df <- suicide |>
+  inner_join(edu, by = c("territorio", "anio")) |>
+  filter(anio >= 2011, anio <= 2024) |>
+  arrange(territorio, anio)
+
+# Quick check
+df |>
+  count(territorio) |>
+  summarise(
+    n_municipios = n(),
+    min_obs = min(n),
+    max_obs = max(n)
+  )
+```
+
+## Cross-correlation across all municipalities and lags
+```{r}
+edu_vars <- c(
+  "desercion", "cobertura_bruta", "cobertura_neta",
+  "aprobacion", "reprobacion", "repitencia"
+)
+
+lags <- 0:5
+
+# For each municipality, compute lagged correlations
+# then average across municipalities
+panel_correlations <- map_dfr(edu_vars, function(var) {
+  map_dfr(lags, function(lag) {
+    # Compute correlation per municipality
+    muni_cors <- df |>
+      group_by(territorio) |>
+      arrange(anio) |>
+      summarise(
+        r = {
+          x <- get(var)
+          y <- valor
+          n <- length(x)
+          if (lag > 0 && n > lag + 2) {
+            cor(x[1:(n - lag)], y[(lag + 1):n],
+              use = "complete.obs",
+              method = "spearman"
+            )
+          } else if (lag == 0 && n > 2) {
+            cor(x, y,
+              use = "complete.obs",
+              method = "spearman"
+            )
+          } else {
+            NA_real_
+          }
+        },
+        .groups = "drop"
+      ) |>
+      filter(!is.na(r))
+
+    tibble(
+      indicator  = var,
+      lag        = lag,
+      mean_r     = mean(muni_cors$r),
+      median_r   = median(muni_cors$r),
+      sd_r       = sd(muni_cors$r),
+      n_munis    = nrow(muni_cors)
+    )
+  })
+})
+
+panel_correlations
+```
+
+## Visualise — average correlation across municipalities by lag
+```{r}
+#| fig-height: 8
+
+panel_correlations |>
+  ggplot(aes(x = lag, y = mean_r, fill = mean_r > 0)) +
+  geom_col(width = 0.6) +
+  geom_errorbar(
+    aes(ymin = mean_r - sd_r, ymax = mean_r + sd_r),
+    width = 0.2
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~indicator, ncol = 2) +
+  scale_x_continuous(breaks = lags) +
+  scale_fill_manual(values = c("#d7191c", "#2c7bb6"), guide = "none") +
+  labs(
+    title = "Huila — Education indicators vs suicide mortality",
+    subtitle = "Mean Spearman r across 37 municipalities ± SD | lags 0–5 years",
+    x = "Lag (years)",
+    y = "Mean Spearman r"
+  )
+```
+
+## Distribution of municipality-level correlations at strongest lag
+```{r}
+# Find strongest lag per indicator from panel results
+strongest_lags <- panel_correlations |>
+  group_by(indicator) |>
+  slice_max(abs(mean_r), n = 1) |>
+  select(indicator, lag)
+
+# Recompute municipality-level correlations at those lags
+muni_level <- map_dfr(edu_vars, function(var) {
+  best_lag <- strongest_lags |>
+    filter(indicator == var) |>
+    pull(lag)
+
+  df |>
+    group_by(territorio) |>
+    arrange(anio) |>
+    summarise(
+      r = {
+        x <- get(var)
+        y <- valor
+        n <- length(x)
+        if (best_lag > 0 && n > best_lag + 2) {
+          cor(x[1:(n - best_lag)], y[(best_lag + 1):n],
+            use = "complete.obs",
+            method = "spearman"
+          )
+        } else {
+          cor(x, y, use = "complete.obs", method = "spearman")
+        }
+      },
+      .groups = "drop"
+    ) |>
+    mutate(indicator = var, lag = best_lag)
+})
+
+# Plot distribution
+muni_level |>
+  ggplot(aes(x = r, fill = indicator)) +
+  geom_histogram(bins = 10, color = "white") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  facet_wrap(~indicator, ncol = 2) +
+  scale_fill_brewer(palette = "Set2", guide = "none") +
+  labs(
+    title = "Distribution of municipality-level correlations at strongest lag",
+    subtitle = "Each bar = one municipality in Huila",
+    x = "Spearman r",
+    y = "Number of municipalities"
+  )
+```

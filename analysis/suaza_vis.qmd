@@ -37,6 +37,22 @@ df |>
   facet_wrap(~serie, scales = "free_y") +
   labs(title = "Suaza — Suicide mortality vs school dropout over time")
 ```
+```{r}
+df |>
+  select(anio, valor, repitencia) |>
+  pivot_longer(-anio, names_to = "serie", values_to = "valor_serie") |>
+  group_by(serie) |>
+  mutate(z = scale(valor_serie)[,1]) |>
+  ggplot(aes(anio, z, color = serie)) +
+  geom_line(linewidth = 1.2) +
+  geom_point() +
+  labs(
+    title = "Suaza — Standardized trends: suicide mortality vs repitencia",
+    y = "Standardized value (z-score)",
+    x = "Year"
+  ) +
+  theme_minimal()
+```
 
 ## Cross-correlation across multiple lags
 ```{r}
@@ -58,7 +74,8 @@ correlations <- map_dfr(lags, function(lag) {
 
   tibble(
     lag = lag,
-    r = cor(x, y, use = "complete.obs"),
+    r_pearson  = cor(x, y, use = "complete.obs", method = "pearson"),
+    r_spearman = cor(x, y, use = "complete.obs", method = "spearman"),
     n = sum(complete.cases(cbind(x, y)))
   )
 })
@@ -67,20 +84,20 @@ correlations
 ```
 ```{r}
 correlations |>
-  ggplot(aes(x = lag, y = r)) +
+  ggplot(aes(x = lag, y = r_spearman)) +
   geom_col(fill = "#2c7bb6", width = 0.6) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_x_continuous(breaks = lags) +
   labs(
     title = "Cross-correlation: dropout (t) → suicide mortality (t + lag)",
     x = "Lag (years)",
-    y = "Pearson r"
+    y = "Spearman ρ"
   )
 ```
 
 ## Expand to all education indicators
 ```{r}
-edu_vars <- c("desercion", "cobertura_bruta", "cobertura_neta",
+edu_vars <- c("desercion",
               "aprobacion", "reprobacion", "repitencia")
 
 all_correlations <- map_dfr(edu_vars, function(var) {
@@ -96,7 +113,7 @@ all_correlations <- map_dfr(edu_vars, function(var) {
     tibble(
       indicator = var,
       lag = lag,
-      r = cor(x, y, use = "complete.obs"),
+      r = cor(x, y, use = "complete.obs", method = "spearman"),
       n = sum(complete.cases(cbind(x, y)))
     )
   })
@@ -116,16 +133,15 @@ all_correlations |>
     title = "Cross-correlation: education indicators → suicide mortality",
     subtitle = "Dropout, coverage, approval rates at lags 0–5 years",
     x = "Lag (years)",
-    y = "Pearson r"
+    y = "Spearman ρ"
   )
 ```
 
 ## Regression with strongest lag
 
-Once you identify the strongest lag visually, fit a simple model here.
+### Deserción
 ```{r}
-# Replace lag_n with whatever lag showed the strongest signal above
-lag_n <- 2
+lag_n <- 1
 
 df_model <- df |>
   mutate(desercion_lagged = lag(desercion, lag_n)) |>
@@ -144,4 +160,98 @@ df_model |>
     x = paste0("Dropout rate (t - ", lag_n, ")"),
     y = "Suicide mortality (per 100k)"
   )
+```
+
+### Repitencia
+```{r}
+lag_n <- 5
+
+df_model <- df |>
+  mutate(repitencia_lagged = lag(repitencia, lag_n)) |>
+  filter(!is.na(repitencia_lagged))
+
+model <- lm(valor ~ repitencia_lagged, data = df_model)
+summary(model)
+```
+```{r}
+df_model |>
+  ggplot(aes(x = repitencia_lagged, y = valor)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "#2c7bb6") +
+  labs(
+    title = paste0("Suicide mortality ~ repetition (lag ", lag_n, " years)"),
+    x = paste0("Repetition rate (t - ", lag_n, ")"),
+    y = "Suicide mortality (per 100k)"
+  )
+```
+
+### Reprobación
+```{r}
+lag_n <- 5
+
+df_model <- df |>
+  mutate(reprobacion_lagged = lag(reprobacion, lag_n)) |>
+  filter(!is.na(reprobacion_lagged))
+
+model <- lm(valor ~ reprobacion_lagged, data = df_model)
+summary(model)
+```
+```{r}
+df_model |>
+  ggplot(aes(x = reprobacion_lagged, y = valor)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "#2c7bb6") +
+  labs(
+    title = paste0("Suicide mortality ~ failure (lag ", lag_n, " years)"),
+    x = paste0("Failure rate (t - ", lag_n, ")"),
+    y = "Suicide mortality (per 100k)"
+  )
+```
+
+```{r}
+pf <- read_csv(here("outputs/csv/suicide_huila.csv"))
+pf |> distinct(territorio) |> arrange(territorio)
+pf |>
+  count(territorio, name = "n_anio") |>
+  arrange(desc(n_anio))
+pf |> distinct(sexo)
+pf |> summarise(min_anio = min(anio), max_anio = max(anio))
+edu <- read_csv(here("outputs/csv/huila_map.csv"))
+glimpse(edu)
+edu |> glimpse()
+edu |> select(NAME_2, municipio) |> head(10)
+```
+
+```{r}
+library(jsonlite)
+
+# Quick check without downloading everything
+url <- "https://www.datos.gov.co/resource/nudc-7mev.json?$where=departamento=%27Huila%27&$select=a_o,municipio&$limit=50000"
+test <- fromJSON(url)
+
+test |>
+  mutate(anio = as.integer(a_o)) |>
+  summarise(
+    min_anio = min(anio, na.rm = TRUE),
+    max_anio = max(anio, na.rm = TRUE),
+    n_municipios = n_distinct(municipio)
+  )
+```
+
+```{r}
+suicide_municipios <- pf |>
+  distinct(territorio) |>
+  pull(territorio) |>
+  sort()
+
+edu_municipios <- test |>
+  distinct(municipio) |>
+  pull(municipio) |>
+  sort()
+
+# Which are in suicide but not education
+setdiff(suicide_municipios, edu_municipios)
+
+# Which are in education but not suicide
+setdiff(edu_municipios, suicide_municipios)
 ```
