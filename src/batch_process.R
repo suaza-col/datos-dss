@@ -149,22 +149,63 @@ generate_processing_report <- function(results) {
   return(report)
 }
 
+#' Run each indicator's own R script as defined in the YAML config
+#'
+#' Unlike process_all_indicators() which uses the generic pipeline,
+#' this dispatches to each indicator's dedicated script via the
+#' processing.script field in indicators.yml.
+#'
+#' @param config_path Path to indicators configuration file
+#' @param base_dir Base directory for resolving script paths
+run_indicator_scripts <- function(
+    config_path = "/workspace/packages/data-r/config/indicators.yml",
+    base_dir = "/workspace/packages/data-r") {
+
+  config <- yaml::read_yaml(config_path)
+  indicator_ids <- names(config)
+
+  message(glue::glue("🚀 Running scripts for {length(indicator_ids)} indicator(s)..."))
+
+  results <- list()
+
+  for (indicator_id in indicator_ids) {
+    indicator_config <- config[[indicator_id]]
+    script_rel <- indicator_config$processing$script
+
+    if (is.null(script_rel)) {
+      message(glue::glue("⚠️  No script defined for {indicator_id}, skipping"))
+      results[[indicator_id]] <- list(indicator_id = indicator_id, error = "no script defined")
+      next
+    }
+
+    script_path <- file.path(base_dir, script_rel)
+
+    if (!file.exists(script_path)) {
+      message(glue::glue("⚠️  Script not found for {indicator_id}: {script_path}"))
+      results[[indicator_id]] <- list(indicator_id = indicator_id, error = "script not found")
+      next
+    }
+
+    message(glue::glue("🔄 Processing: {indicator_id} ({script_rel})"))
+
+    tryCatch({
+      source(script_path, local = new.env(parent = globalenv()))
+      message(glue::glue("✅ Completed: {indicator_id}"))
+      results[[indicator_id]] <- list(indicator_id = indicator_id, error = NULL)
+    }, error = function(e) {
+      message(glue::glue("❌ Failed: {indicator_id} - {e$message}"))
+      results[[indicator_id]] <<- list(indicator_id = indicator_id, error = e$message)
+    })
+  }
+
+  successful <- sum(purrr::map_lgl(results, ~ is.null(.x$error)))
+  failed <- length(results) - successful
+  message(glue::glue("📊 Done — {successful} succeeded, {failed} failed"))
+
+  invisible(results)
+}
+
 # Command-line execution
 if (!interactive()) {
-  args <- commandArgs(trailingOnly = TRUE)
-
-  if (length(args) == 0 || args[1] == "all") {
-    # Process all indicators
-    results <- process_all_indicators()
-    report <- generate_processing_report(results)
-    readr::write_csv(report, here("outputs/processing_report.csv"))
-  } else if (args[1] == "suaza") {
-    # Process Suaza priorities
-    results <- process_suaza_priorities()
-  } else {
-    # Process specific indicator
-    indicator_id <- args[1]
-    result <- process_indicator(indicator_id)
-    message(glue::glue("✅ Processed {indicator_id} successfully"))
-  }
+  run_indicator_scripts()
 }

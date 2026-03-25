@@ -13,7 +13,7 @@
     "r:check": "docker-compose run --rm r-dev bash -c 'cd /workspace/packages/data-r && Rscript -e \"devtools::check()\"'",
     "r:document": "docker-compose run --rm r-dev bash -c 'cd /workspace/packages/data-r && Rscript -e \"devtools::document()\"'",
     "r:install": "docker-compose run --rm r-dev bash -c 'cd /workspace/packages/data-r && Rscript -e \"devtools::install()\"'",
-    "r:process-indicators": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/setup.R && cd /workspace/packages/data-r && RENV_CONFIG_AUTOLOADER_ENABLED=FALSE Rscript -e \"library(dss.indicators); process_indicator(\\\"suicide_huila\\\")\" && Rscript /workspace/packages/data-r/src/indicators/health/suicide/suicide_huila.R'",
+    "r:process-indicators": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/setup.R && cd /workspace && RENV_CONFIG_AUTOLOADER_ENABLED=FALSE Rscript /workspace/packages/data-r/src/batch_process.R'",
     "r:process-single": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/setup.R && cd /workspace/packages/data-r && RENV_CONFIG_AUTOLOADER_ENABLED=FALSE Rscript -e \"library(dss.indicators); process_indicator(\\\"suicide_huila\\\")\"'",
     "r:process-suicide": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/health/suicide/suicide_huila.R'",
     "r:process-education": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/health/education/education_suaza.R'",
