@@ -109,20 +109,19 @@ process_analytics_suaza <- function(output_dir = here("outputs")) {
   cruce_parquet <- file.path(output_dir, "parquet", "analytics_suaza.parquet")
   lags_csv      <- file.path(output_dir, "csv",     "analytics_suaza_lags.csv")
   lags_parquet  <- file.path(output_dir, "parquet", "analytics_suaza_lags.parquet")
-
-  write_csv(data_cruce,    cruce_csv)
-  write_parquet(data_cruce, cruce_parquet)
-  write_csv(lag_summaries, lags_csv)
+  write_csv(data_cruce,       cruce_csv)
+  write_parquet(data_cruce,   cruce_parquet)
+  write_csv(lag_summaries,    lags_csv)
   write_parquet(lag_summaries, lags_parquet)
 
-  message(glue("✅ Saved joined data  → {cruce_csv}"))
-  message(glue("✅ Saved lag models   → {lags_csv}"))
+  message(glue("✅ Saved joined data      → {cruce_csv}"))
+  message(glue("✅ Saved lag models       → {lags_csv}"))
 
   return(list(
-    data              = data_cruce,
-    lag_models        = list(lag1 = modelo_lag1, lag1_t = modelo_lag1_t, lag2 = modelo_lag2),
-    lag_summaries     = lag_summaries,
-    output_files      = c(cruce_csv, cruce_parquet, lags_csv, lags_parquet)
+    data          = data_cruce,
+    lag_models    = list(lag1 = modelo_lag1, lag1_t = modelo_lag1_t, lag2 = modelo_lag2),
+    lag_summaries = lag_summaries,
+    output_files  = c(cruce_csv, cruce_parquet, lags_csv, lags_parquet)
   ))
 }
 
