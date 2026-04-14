@@ -1,4 +1,4 @@
-# Suicide Mortality Rate - Huila (Colombia)
+# Suicide Mortality Rate
 suicide_huila:
   id: "SUICIDE_MORTALITY_HUILA"
   names:
@@ -35,7 +35,7 @@ suicide_huila:
         type: "character"
   updated: "2026-03-09"
 
-# Analytics: Deserción Escolar × Mortalidad por Suicidio - Suaza
+# Analytics: Deserción Escolar × Mortalidad por Suicidio
 analytics_suaza:
   id: "ANALYTICS_SUAZA"
   names:
@@ -56,7 +56,7 @@ analytics_suaza:
       - "analytics_lags"
   updated: "2026-03-13"
 
-# Huila Municipal Map
+# Municipal Map
 huila_map:
   id: "HUILA_MUNICIPAL_MAP"
   names:
@@ -105,7 +105,7 @@ huila_map:
         description: "Repetition rate (%)"
   updated: "2026-03-14"
 
-# Huila Maternal Mortality Rate
+# Maternal Mortality Rate
 maternal_mortality_rate:
   id: "MATERNAL_MORTALITY_RATE"
   names:
@@ -146,3 +146,98 @@ maternal_mortality_rate:
       - name: "indicador"
         type: "character"
   updated: "2026-03-30"
+
+# Journey Time
+journey_time:
+  id: "JOURNEY_TIME"
+  names:
+    es: "Tiempo de traslado"
+    en: "Journey time"
+  source:
+    name: "Mock"
+  category: "dss/territory"
+  processing:
+    type: "mock"
+    script: "src/indicators/territory/journey_time.R"
+  output:
+    format: ["csv","parquet"]
+    structure: "long"
+    files:
+      - "journey_time"
+  updated: "2026-04-13"
+
+# Transport Frequency
+transport_frequency:
+  id: "transport_frequency"
+  names:
+    es: "Frecuencia de Transporte"
+    en: "Transport Frequency"
+  source:
+    name: "Mock"
+  category: "dss/transport"
+  processing:
+    type: "mock"
+    script: "src/indicators/transport/transport_frequency.R"
+  output:
+    format: ["csv","parquet"]
+    structure: "long"
+    files:
+      - "transport_frequency"
+  updated: "2026-04-13"
+
+# Care Overload
+care_overload:
+  id: "care_overload"
+  names:
+    es: "Sobrecarga de Cuidados"
+    en: "Care Overload"
+  source:
+    name: "Mock"
+  category: "dss/care"
+  processing:
+    type: "mock"
+    script: "src/indicators/care/care_overload.R"
+  output:
+    format: ["csv","parquet"]
+    structure: "long"
+    files:
+      - "care_overload"
+  updated: "2026-04-13"
+
+# Informal employment
+informal_employment:
+  id: "informal_employment"
+  names:
+    es: "Empleo Informal"
+    en: "Informal employment"
+  source:
+    name: "Mock"
+  category: "dss/employment"
+  processing:
+    type: "mock"
+    script: "src/indicators/employment/informal_employment.R"
+  output:
+    format: ["csv","parquet"]
+    structure: "long"
+    files:
+      - "informal_employment"
+  updated: "2026-04-13"
+
+# Program cover
+program_cover:
+  id: "program_cover"
+  names:
+    es: "Cobertura Programa"
+    en: "Program cover"
+  source:
+    name: "Mock"
+  category: "policy/welfare"
+  processing:
+    type: "mock"
+    script: "src/indicators/welfare/program_cover.R"
+  output:
+    format: ["csv","parquet"]
+    structure: "long"
+    files:
+      - "program_cover"
+  updated: "2026-04-13"

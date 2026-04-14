@@ -19,7 +19,11 @@
     "r:process-analytics": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/health/analytics/analytics_suaza.R'",
     "r:process-huila-map": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/health/huila_map/huila_map.R'",
     "r:process-maternal-mortality-rate": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/health/maternal_mortality/maternal_mortality_rate.R'",
-    "r:process-mock-indicators": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/setup.R && cd /workspace && RENV_CONFIG_AUTOLOADER_ENABLED=FALSE Rscript /workspace/packages/data-r/src/batch_process_mock.R'"
+    "r:process-informal-employment": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/employment/informal_employment.R'",
+    "r:process-welfare-program-cover": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/welfare/program_cover.R'",
+    "r:process-care-overload": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/care/care_overload.R'",
+    "r:process-journey-time": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/territory/journey_time.R'",
+    "r:process-transport-frequency": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/transport/transport_frequency.R'"
   },
   "dependencies": {},
   "devDependencies": {},

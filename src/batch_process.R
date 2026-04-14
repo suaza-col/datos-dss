@@ -89,12 +89,12 @@ process_all_indicators <- function(config_path = here("packages/data-r/config/in
   return(results)
 }
 
-#' Process only priority indicators for Suaza
+#' Process only priority indicators
 #'
 #' @param output_dir Directory for outputs
 #' @return Processing results
 process_suaza_priorities <- function(output_dir = here("outputs")) {
-  # Priority indicators for Suaza implementation
+  # Priority indicators
   priority_indicators <- c(
     "suicide_huila",
     "analytics_suaza",
@@ -102,7 +102,7 @@ process_suaza_priorities <- function(output_dir = here("outputs")) {
     "maternal_mortality_rate"
   )
 
-  message("🇨🇴 Processing priority indicators for Suaza, Colombia")
+  message("Processing priority indicators")
   message(glue::glue("📋 Processing {length(priority_indicators)} priority indicators"))
 
   results <- purrr::map(priority_indicators, ~ {
@@ -112,7 +112,7 @@ process_suaza_priorities <- function(output_dir = here("outputs")) {
 
   names(results) <- priority_indicators
 
-  message("✅ Suaza priority indicators completed!")
+  message("✅ Priority indicators completed!")
 
   return(results)
 }
