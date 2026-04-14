@@ -23,7 +23,8 @@
     "r:process-welfare-program-cover": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/welfare/program_cover.R'",
     "r:process-care-overload": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/care/care_overload.R'",
     "r:process-journey-time": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/territory/journey_time.R'",
-    "r:process-transport-frequency": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/transport/transport_frequency.R'"
+    "r:process-transport-frequency": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/indicators/transport/transport_frequency.R'",
+    "r:process-smv-map": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/mock/SMV_map.R'"
   },
   "dependencies": {},
   "devDependencies": {},

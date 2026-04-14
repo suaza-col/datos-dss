@@ -223,6 +223,27 @@ informal_employment:
       - "informal_employment"
   updated: "2026-04-13"
 
+# SMV Mock Municipal Map
+smv_map:
+  id: "SMV_MOCK_MAP"
+  names:
+    es: "Mapa municipal de San Martín del Valle (datos ficticios)"
+    en: "San Martín del Valle Municipal Map (mock data)"
+  source:
+    name: "GADM (Global Administrative Areas Database) — datos ficticios"
+    url: "https://gadm.org/"
+  category: "mock/spatial"
+  processing:
+    type: "mock"
+    script: "src/mock/SMV_map.R"
+  output:
+    format: ["geojson", "csv"]
+    structure: "spatial"
+    files:
+      - "SMV_municipalities"
+      - "SMV_map"
+  updated: "2026-04-14"
+
 # Program cover
 program_cover:
   id: "program_cover"
