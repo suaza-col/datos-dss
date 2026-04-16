@@ -170,12 +170,10 @@ total_municipio <- base %>%
   mutate(
     iso3 = "COL",
     NAME_2 = "San Martín del Valle",
-    cod_local = NA_character_,
-    sexo = "Mujeres",
     grupo_edad = "Todas las edades",
     zona = "Total"
   ) %>%
-  select(iso3, NAME_2, cod_local, anio, sexo, grupo_edad, zona, valor)
+  select(iso3, NAME_2, anio, grupo_edad, zona, valor)
 
 # 9.2 Municipio por edad
 municipio_edad <- base %>%
@@ -187,11 +185,9 @@ municipio_edad <- base %>%
   mutate(
     iso3 = "COL",
     NAME_2 = "San Martín del Valle",
-    cod_local = NA_character_,
-    sexo = "Mujeres",
     zona = "Total"
   ) %>%
-  select(iso3, NAME_2, cod_local, anio, sexo, grupo_edad, zona, valor)
+  select(iso3, NAME_2, anio, grupo_edad, zona, valor)
 
 # 9.3 Municipio por zona
 municipio_zona <- base %>%
@@ -203,12 +199,10 @@ municipio_zona <- base %>%
   mutate(
     iso3 = "COL",
     NAME_2 = "San Martín del Valle",
-    cod_local = NA_character_,
-    sexo = "Mujeres",
     grupo_edad = "Todas las edades"
   ) %>%
   rename(zona = tipo_zona) %>%
-  select(iso3, NAME_2, cod_local, anio, sexo, grupo_edad, zona, valor)
+  select(iso3, NAME_2, anio, grupo_edad, zona, valor)
 
 # 9.4 Municipio por zona y edad
 municipio_zona_edad <- base %>%
@@ -219,12 +213,10 @@ municipio_zona_edad <- base %>%
   ) %>%
   mutate(
     iso3 = "COL",
-    NAME_2 = "San Martín del Valle",
-    cod_local = NA_character_,
-    sexo = "Mujeres"
+    NAME_2 = "San Martín del Valle"
   ) %>%
   rename(zona = tipo_zona) %>%
-  select(iso3, NAME_2, cod_local, anio, sexo, grupo_edad, zona, valor)
+  select(iso3, NAME_2, anio, grupo_edad, zona, valor)
 
 # 9.5 Barrio total
 barrio_total <- base %>%
@@ -244,12 +236,10 @@ barrio_total <- base %>%
   ) %>%
   mutate(
     iso3 = "COL",
-    cod_local = NA_character_,
-    sexo = "Mujeres",
     grupo_edad = "Todas las edades"
   ) %>%
   rename(zona = tipo_zona) %>%
-  select(iso3, NAME_2, cod_local, anio, sexo, grupo_edad, zona, valor)
+  select(iso3, NAME_2, anio, grupo_edad, zona, valor)
 
 # 9.6 Barrio por edad
 barrio_edad <- base %>%
@@ -259,12 +249,10 @@ barrio_edad <- base %>%
     .groups = "drop"
   ) %>%
   mutate(
-    iso3 = "COL",
-    cod_local = NA_character_,
-    sexo = "Mujeres"
+    iso3 = "COL"
   ) %>%
   rename(zona = tipo_zona) %>%
-  select(iso3, NAME_2, cod_local, anio, sexo, grupo_edad, zona, valor)
+  select(iso3, NAME_2, anio, grupo_edad, zona, valor)
 
 # Unir todo
 tasa_mortalidad_materna_final <- bind_rows(
