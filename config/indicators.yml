@@ -89,7 +89,7 @@ maternal_mortality_rate:
         type: "character"
   updated: "2026-03-30"
 
-# Journey Time
+# SMV Mock Journey Time
 journey_time:
   id: "JOURNEY_TIME"
   names:
@@ -100,7 +100,7 @@ journey_time:
   category: "dss/territory"
   processing:
     type: "mock"
-    script: "src/indicators/territory/journey_time.R"
+    script: "src/mock/territory/journey_time.R"
   output:
     format: ["csv","parquet"]
     structure: "long"
@@ -108,7 +108,7 @@ journey_time:
       - "journey_time"
   updated: "2026-04-13"
 
-# Transport Frequency
+# SMV Mock Transport Frequency
 transport_frequency:
   id: "transport_frequency"
   names:
@@ -119,7 +119,7 @@ transport_frequency:
   category: "dss/transport"
   processing:
     type: "mock"
-    script: "src/indicators/transport/transport_frequency.R"
+    script: "src/mock/transport/transport_frequency.R"
   output:
     format: ["csv","parquet"]
     structure: "long"
@@ -127,7 +127,7 @@ transport_frequency:
       - "transport_frequency"
   updated: "2026-04-13"
 
-# Care Overload
+# SMV Mock Care Overload
 care_overload:
   id: "care_overload"
   names:
@@ -138,7 +138,7 @@ care_overload:
   category: "dss/care"
   processing:
     type: "mock"
-    script: "src/indicators/care/care_overload.R"
+    script: "src/mock/care/care_overload.R"
   output:
     format: ["csv","parquet"]
     structure: "long"
@@ -146,7 +146,7 @@ care_overload:
       - "care_overload"
   updated: "2026-04-13"
 
-# Informal employment
+# SMV Mock Informal employment
 informal_employment:
   id: "informal_employment"
   names:
@@ -157,7 +157,7 @@ informal_employment:
   category: "dss/employment"
   processing:
     type: "mock"
-    script: "src/indicators/employment/informal_employment.R"
+    script: "src/mock/employment/informal_employment.R"
   output:
     format: ["csv","parquet"]
     structure: "long"
@@ -186,7 +186,7 @@ smv_map:
       - "SMV_map"
   updated: "2026-04-14"
 
-# Program cover
+# SMV Mock Program cover
 program_cover:
   id: "program_cover"
   names:
@@ -197,7 +197,7 @@ program_cover:
   category: "policy/welfare"
   processing:
     type: "mock"
-    script: "src/indicators/welfare/program_cover.R"
+    script: "src/mock/welfare/program_cover.R"
   output:
     format: ["csv","parquet"]
     structure: "long"
