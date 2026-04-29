@@ -288,4 +288,57 @@ sf::st_write(
 )
 message("✅ mock_maternal_mortality.geojson")
 
+# ── 9. DSS Bivariate GeoJSONs (all ordered indicator pairs) ──────────────────
+#
+# For each ordered pair (ind_x, ind_y) where ind_x ≠ ind_y:
+#   ind_x  = X-axis  (the forest-plot–selected indicator)
+#   ind_y  = Y-axis  (the second DSS indicator, replacing maternal mortality)
+#
+# File: mock_bivariate_dss_{ind_x}_{ind_y}.geojson
+# Properties: NAME_2, value (ind_x), maternal_value (ind_y),
+#             ind_class, maternal_class, color
+
+make_dss_bivariate_geojson <- function(ind_x_col, ind_y_col, out_name) {
+  ind_df <- map_data |>
+    dplyr::select(
+      territorio,
+      value          = !!rlang::sym(ind_x_col),
+      maternal_value = !!rlang::sym(ind_y_col)
+    ) |>
+    dplyr::mutate(
+      ind_class      = classify_tercile(value),
+      maternal_class = classify_tercile(maternal_value),
+      color = mapply(
+        function(mc, ic) {
+          if (is.na(mc) || is.na(ic)) "#CCCCCC"
+          else bivariate_colors[mc + 1L, ic + 1L]
+        },
+        maternal_class, ind_class,
+        USE.NAMES = FALSE
+      )
+    )
+
+  out_sf <- smv_sf |>
+    dplyr::select(NAME_2, geometry) |>
+    dplyr::left_join(ind_df, by = c("NAME_2" = "territorio")) |>
+    dplyr::select(NAME_2, value, maternal_value, maternal_class, ind_class,
+                  color, geometry)
+
+  out_path <- file.path(output_dir, "geojson", out_name)
+  sf::st_write(out_sf, out_path, delete_dsn = TRUE, quiet = TRUE)
+  message(paste0("✅ ", out_name))
+}
+
+dss_indicators <- c("traslado", "empleo_informal", "sobrecarga",
+                    "cobertura_programa", "transporte")
+
+for (ind_x in dss_indicators) {
+  for (ind_y in dss_indicators) {
+    if (ind_x != ind_y) {
+      out_name <- paste0("mock_bivariate_dss_", ind_x, "_", ind_y, ".geojson")
+      make_dss_bivariate_geojson(ind_x, ind_y, out_name)
+    }
+  }
+}
+
 message("\n✅ analytics_maternal_mock.R complete")
