@@ -28,15 +28,23 @@ output_dir <- here("outputs")
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 # Load barrio-level rows from a parquet, keeping one row per NAME_2/anio.
-# "barrio_total" rows are identified by grupo_edad == "Todas las edades" and
-# NAME_2 not being the municipality aggregate ("San Martín del Valle").
+# Handles three column layouts across different indicators:
+#   - grupo_edad present  → keep rows where grupo_edad == "Todas las edades"
+#   - etnia present       → keep rows where etnia == "Total"
+#   - neither present     → keep all barrio-level rows
 load_barrio <- function(filename, col_name) {
   df <- read_parquet(file.path(output_dir, "parquet", filename))
+
+  if ("grupo_edad" %in% names(df)) {
+    df <- dplyr::filter(df, grupo_edad == "Todas las edades")
+  } else if ("etnia" %in% names(df)) {
+    df <- dplyr::filter(df, etnia == "Total")
+  } else if ("sexo" %in% names(df)) {
+    df <- dplyr::filter(df, sexo == "Total")
+  }
+
   df |>
-    dplyr::filter(
-      grupo_edad == "Todas las edades",
-      !NAME_2 %in% c("San Martín del Valle")
-    ) |>
+    dplyr::filter(!NAME_2 %in% c("San Martín del Valle")) |>
     dplyr::group_by(NAME_2, anio) |>
     dplyr::summarise(valor = mean(valor, na.rm = TRUE), .groups = "drop") |>
     dplyr::mutate(valor = ifelse(is.nan(valor), NA_real_, valor)) |>
@@ -84,17 +92,17 @@ mm_raw <- read_parquet(
 
 mm_barrio <- mm_raw |>
   dplyr::filter(
-    grupo_edad == "Todas las edades",
+    etnia == "Total",
     !NAME_2 %in% c("San Martín del Valle")
   ) |>
   dplyr::select(NAME_2, anio, zona, valor_mm = valor)
 
 # ── 2. Load each DSS indicator's barrio-level data ────────────────────────────
 
-traslado_df    <- load_barrio("journey_time_municipal.parquet",       "traslado")
-empleo_df      <- load_barrio("informal_employment_municipal.parquet","empleo_informal")
+traslado_df    <- load_barrio("journey_time.parquet",       "traslado")
+empleo_df      <- load_barrio("informal_employment.parquet","empleo_informal")
 sobrecarga_df  <- load_barrio("care_overload_municipal.parquet",      "sobrecarga")
-cobertura_df   <- load_barrio("program_cover_municipal.parquet",      "cobertura_programa")
+cobertura_df   <- load_barrio("program_cover.parquet",                "cobertura_programa")
 transporte_df  <- load_barrio("transport_frequency_municipal.parquet","transporte")
 
 # ── 3. Join all indicators ────────────────────────────────────────────────────

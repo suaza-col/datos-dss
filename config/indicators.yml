@@ -22,7 +22,6 @@ huila_map:
       - "map_reprobacion"
       - "map_repitencia"
       - "map"
-    # CSV columns; GeoJSON features may additionally include GADM attributes
     columns:
       - name: "municipio"
         type: "character"
@@ -47,7 +46,28 @@ huila_map:
         description: "Repetition rate (%)"
   updated: "2026-03-14"
 
-# Maternal Mortality Rate (mock data for SMV)
+# SMV Mock Map — must run before all simulation scripts that read SMV_map.csv
+smv_map:
+  id: "SMV_MOCK_MAP"
+  names:
+    es: "Mapa municipal de San Martín del Valle (datos ficticios)"
+    en: "San Martín del Valle Municipal Map (mock data)"
+  source:
+    name: "GADM (Global Administrative Areas Database) — datos ficticios"
+    url: "https://gadm.org/"
+  category: "mock/spatial"
+  processing:
+    type: "mock"
+    script: "src/mock/SMV_map.R"
+  output:
+    format: ["geojson", "csv"]
+    structure: "spatial"
+    files:
+      - "SMV_municipalities"
+      - "SMV_map"
+  updated: "2026-04-14"
+
+# Maternal Mortality Rate — reads SMV_map.csv; must run after smv_map
 maternal_mortality_rate:
   id: "MATERNAL_MORTALITY_RATE"
   names:
@@ -69,22 +89,27 @@ maternal_mortality_rate:
         type: "character"
       - name: "NAME_2"
         type: "character"
+      - name: "cod_local"
+        type: "character"
       - name: "anio"
         type: "integer"
-      - name: "grupo_edad"
+      - name: "sexo"
         type: "character"
       - name: "zona"
         type: "character"
+      - name: "etnia"
+        type: "character"
       - name: "valor"
         type: "numeric"
-  updated: "2026-04-16"
+  updated: "2026-05-13"
 
-# SMV Mock Journey Time
+# Journey Time — merged global + barrio script; reads SMV_map.csv
+# Writes journey_time.parquet (global) and journey_time_municipal.parquet (barrio)
 journey_time:
   id: "JOURNEY_TIME"
   names:
-    es: "Tiempo de traslado"
-    en: "Journey time"
+    es: "Proporción de embarazadas a más de 1 hora del centro de salud"
+    en: "Proportion of pregnant women >1 hour from nearest health centre"
   source:
     name: "Mock"
   category: "dss/territory"
@@ -92,18 +117,104 @@ journey_time:
     type: "mock"
     script: "src/mock/territory/journey_time.R"
   output:
-    format: ["csv","parquet"]
+    format: ["csv", "parquet"]
     structure: "long"
     files:
       - "journey_time"
-  updated: "2026-04-13"
+    columns:
+      - name: "iso3"
+        type: "character"
+      - name: "NAME_2"
+        type: "character"
+      - name: "cod_local"
+        type: "character"
+      - name: "anio"
+        type: "integer"
+      - name: "sexo"
+        type: "character"
+      - name: "zona"
+        type: "character"
+      - name: "etnia"
+        type: "character"
+      - name: "valor"
+        type: "numeric"
+  updated: "2026-05-13"
 
-# SMV Mock Transport Frequency
+# Informal Employment — merged global + barrio script; reads SMV_map.csv
+# Writes informal_employment.parquet (global) and informal_employment_municipal.parquet (barrio)
+informal_employment:
+  id: "informal_employment"
+  names:
+    es: "Proporción de personas con empleo informal"
+    en: "Proportion of people in informal employment"
+  source:
+    name: "Mock"
+  category: "dss/employment"
+  processing:
+    type: "mock"
+    script: "src/mock/employment/informal_employment.R"
+  output:
+    format: ["csv", "parquet"]
+    structure: "long"
+    files:
+      - "informal_employment"
+    columns:
+      - name: "iso3"
+        type: "character"
+      - name: "NAME_2"
+        type: "character"
+      - name: "cod_local"
+        type: "character"
+      - name: "anio"
+        type: "integer"
+      - name: "sexo"
+        type: "character"
+      - name: "zona"
+        type: "character"
+      - name: "valor"
+        type: "numeric"
+  updated: "2026-05-13"
+
+# Program Cover — merged global + barrio script; reads SMV_map.csv
+# Writes program_cover.parquet (global) and program_cover_municipal.parquet (barrio)
+program_cover:
+  id: "program_cover"
+  names:
+    es: "Cobertura de programas de apoyo a embarazadas"
+    en: "Coverage of social support programmes for pregnant women"
+  source:
+    name: "Mock"
+  category: "policy/welfare"
+  processing:
+    type: "mock"
+    script: "src/mock/welfare/program_cover.R"
+  output:
+    format: ["csv", "parquet"]
+    structure: "long"
+    files:
+      - "program_cover"
+    columns:
+      - name: "iso3"
+        type: "character"
+      - name: "NAME_2"
+        type: "character"
+      - name: "cod_local"
+        type: "character"
+      - name: "anio"
+        type: "integer"
+      - name: "zona"
+        type: "character"
+      - name: "valor"
+        type: "numeric"
+  updated: "2026-05-13"
+
+# Transport Frequency — merged global + barrio script; reads SMV_map.csv
+# Writes transport_frequency.parquet (global) and transport_frequency_municipal.parquet (barrio)
 transport_frequency:
   id: "transport_frequency"
   names:
-    es: "Frecuencia de Transporte"
-    en: "Transport Frequency"
+    es: "Frecuencia de Transporte Público Subsidiado"
+    en: "Subsidised Public Transport Frequency"
   source:
     name: "Mock"
   category: "dss/transport"
@@ -111,15 +222,16 @@ transport_frequency:
     type: "mock"
     script: "src/mock/transport/transport_frequency.R"
   output:
-    format: ["csv","parquet"]
+    format: ["csv", "parquet"]
     structure: "long"
     files:
       - "transport_frequency"
-  updated: "2026-04-13"
+  updated: "2026-05-13"
 
-# SMV Mock Care Overload
-care_overload:
-  id: "care_overload"
+# Care Overload — reads SMV_map.csv AND maternal_mortality_rate.csv
+# Must run after smv_map and maternal_mortality_rate
+care_overload_municipal:
+  id: "care_overload_municipal"
   names:
     es: "Sobrecarga de Cuidados"
     en: "Care Overload"
@@ -130,72 +242,13 @@ care_overload:
     type: "mock"
     script: "src/mock/care/care_overload.R"
   output:
-    format: ["csv","parquet"]
+    format: ["csv", "parquet"]
     structure: "long"
     files:
-      - "care_overload"
-  updated: "2026-04-13"
+      - "care_overload_municipal"
+  updated: "2026-05-13"
 
-# SMV Mock Informal employment
-informal_employment:
-  id: "informal_employment"
-  names:
-    es: "Empleo Informal"
-    en: "Informal employment"
-  source:
-    name: "Mock"
-  category: "dss/employment"
-  processing:
-    type: "mock"
-    script: "src/mock/employment/informal_employment.R"
-  output:
-    format: ["csv","parquet"]
-    structure: "long"
-    files:
-      - "informal_employment"
-  updated: "2026-04-13"
-
-# SMV Mock Municipal Map
-smv_map:
-  id: "SMV_MOCK_MAP"
-  names:
-    es: "Mapa municipal de San Martín del Valle (datos ficticios)"
-    en: "San Martín del Valle Municipal Map (mock data)"
-  source:
-    name: "GADM (Global Administrative Areas Database) — datos ficticios"
-    url: "https://gadm.org/"
-  category: "mock/spatial"
-  processing:
-    type: "mock"
-    script: "src/mock/SMV_map.R"
-  output:
-    format: ["geojson", "csv"]
-    structure: "spatial"
-    files:
-      - "SMV_municipalities"
-      - "SMV_map"
-  updated: "2026-04-14"
-
-# SMV Mock Program cover
-program_cover:
-  id: "program_cover"
-  names:
-    es: "Cobertura Programa"
-    en: "Program cover"
-  source:
-    name: "Mock"
-  category: "policy/welfare"
-  processing:
-    type: "mock"
-    script: "src/mock/welfare/program_cover.R"
-  output:
-    format: ["csv","parquet"]
-    structure: "long"
-    files:
-      - "program_cover"
-  updated: "2026-04-13"
-
-# SMV Mock Analytics
+# SMV Analytics — must run last; reads combined parquet files from each indicator script
 smv_analytics:
   id: "smv_analytics"
   names:
@@ -208,7 +261,7 @@ smv_analytics:
     type: "mock"
     script: "src/mock/analytics_maternal_mock.R"
   output:
-    format: ["csv","parquet","geojson"]
+    format: ["csv", "parquet", "geojson"]
     structure: "long"
     files:
       - "mock_bivariate_traslado"
@@ -218,4 +271,4 @@ smv_analytics:
       - "mock_bivariate_transporte"
       - "mock_maternal_mortality"
       - "mock_scatter_maternal"
-  updated: "2026-04-16"
+  updated: "2026-05-13"

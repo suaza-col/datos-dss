@@ -21,7 +21,6 @@ library(dplyr)
 library(tidyr)
 library(arrow)
 library(readr)
-library(fs)
 library(glue)
 library(stringi)
 
@@ -194,8 +193,8 @@ process_mock_stratified_indicator <- function(
 
     message(glue("   Output rows: {nrow(out)}"))
 
-    dir_create(file.path(output_dir, "csv"))
-    dir_create(file.path(output_dir, "parquet"))
+    dir.create(file.path(output_dir, "csv"),     showWarnings = FALSE, recursive = TRUE)
+    dir.create(file.path(output_dir, "parquet"), showWarnings = FALSE, recursive = TRUE)
 
     csv_file <- file.path(output_dir, "csv", paste0(output_name, ".csv"))
     parquet_file <- file.path(output_dir, "parquet", paste0(output_name, ".parquet"))
@@ -267,8 +266,8 @@ process_mock_stratified_indicator <- function(
   message(glue("   Zona:        {paste(sort(unique(out$zona)),       collapse = ', ')}"))
 
   # ── Write outputs ─────────────────────────────────────────────────────────
-  dir_create(file.path(output_dir, "csv"))
-  dir_create(file.path(output_dir, "parquet"))
+  dir.create(file.path(output_dir, "csv"),     showWarnings = FALSE, recursive = TRUE)
+  dir.create(file.path(output_dir, "parquet"), showWarnings = FALSE, recursive = TRUE)
 
   csv_file <- file.path(output_dir, "csv", paste0(output_name, ".csv"))
   parquet_file <- file.path(output_dir, "parquet", paste0(output_name, ".parquet"))
