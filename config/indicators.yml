@@ -228,6 +228,42 @@ transport_frequency:
       - "transport_frequency"
   updated: "2026-05-13"
 
+# Infant Care Support — reads SMV_map.csv; must run after smv_map
+# Writes infant_care_support.parquet (global) and infant_care_support_municipal.parquet (barrio)
+infant_care_support:
+  id: "infant_care_support"
+  names:
+    es: "Cobertura programa 'Cuidar en Comunidad' (embarazadas en barrios periféricos)"
+    en: "Coverage of 'Cuidar en Comunidad' programme (pregnant women in peripheral neighbourhoods)"
+  source:
+    name: "Mock"
+  category: "policy/welfare"
+  processing:
+    type: "mock"
+    script: "src/mock/welfare/infant_care_support.R"
+  output:
+    format: ["csv", "parquet"]
+    structure: "long"
+    files:
+      - "infant_care_support"
+      - "infant_care_support_municipal"
+    columns:
+      - name: "iso3"
+        type: "character"
+      - name: "NAME_2"
+        type: "character"
+      - name: "cod_local"
+        type: "character"
+      - name: "anio"
+        type: "integer"
+      - name: "zona"
+        type: "character"
+      - name: "etnia"
+        type: "character"
+      - name: "valor"
+        type: "numeric"
+  updated: "2026-05-14"
+
 # Care Overload — reads SMV_map.csv AND maternal_mortality_rate.csv
 # Must run after smv_map and maternal_mortality_rate
 care_overload_municipal:
@@ -269,6 +305,7 @@ smv_analytics:
       - "mock_bivariate_sobrecarga"
       - "mock_bivariate_cobertura_programa"
       - "mock_bivariate_transporte"
+      - "mock_bivariate_cuidar_comunidad"
       - "mock_maternal_mortality"
       - "mock_scatter_maternal"
-  updated: "2026-05-13"
+  updated: "2026-05-14"

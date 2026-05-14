@@ -99,20 +99,22 @@ mm_barrio <- mm_raw |>
 
 # ── 2. Load each DSS indicator's barrio-level data ────────────────────────────
 
-traslado_df    <- load_barrio("journey_time.parquet",       "traslado")
-empleo_df      <- load_barrio("informal_employment.parquet","empleo_informal")
-sobrecarga_df  <- load_barrio("care_overload_municipal.parquet",      "sobrecarga")
-cobertura_df   <- load_barrio("program_cover.parquet",                "cobertura_programa")
-transporte_df  <- load_barrio("transport_frequency_municipal.parquet","transporte")
+traslado_df        <- load_barrio("journey_time.parquet",                    "traslado")
+empleo_df          <- load_barrio("informal_employment.parquet",              "empleo_informal")
+sobrecarga_df      <- load_barrio("care_overload_municipal.parquet",          "sobrecarga")
+cobertura_df       <- load_barrio("program_cover.parquet",                    "cobertura_programa")
+transporte_df      <- load_barrio("transport_frequency_municipal.parquet",    "transporte")
+cuidar_comunidad_df <- load_barrio("infant_care_support_municipal.parquet",   "cuidar_comunidad")
 
 # ── 3. Join all indicators ────────────────────────────────────────────────────
 
 all_data <- mm_barrio |>
-  dplyr::left_join(traslado_df,   by = c("NAME_2", "anio")) |>
-  dplyr::left_join(empleo_df,     by = c("NAME_2", "anio")) |>
-  dplyr::left_join(sobrecarga_df, by = c("NAME_2", "anio")) |>
-  dplyr::left_join(cobertura_df,  by = c("NAME_2", "anio")) |>
-  dplyr::left_join(transporte_df, by = c("NAME_2", "anio"))
+  dplyr::left_join(traslado_df,         by = c("NAME_2", "anio")) |>
+  dplyr::left_join(empleo_df,           by = c("NAME_2", "anio")) |>
+  dplyr::left_join(sobrecarga_df,       by = c("NAME_2", "anio")) |>
+  dplyr::left_join(cobertura_df,        by = c("NAME_2", "anio")) |>
+  dplyr::left_join(transporte_df,       by = c("NAME_2", "anio")) |>
+  dplyr::left_join(cuidar_comunidad_df, by = c("NAME_2", "anio"))
 
 # ── 4. Forest plot: Spearman correlations (all available years) ───────────────
 #
@@ -127,7 +129,8 @@ indicator_meta <- list(
   empleo_informal    = "Empleo informal",
   sobrecarga         = "Sobrecarga de cuidados",
   cobertura_programa = "Cobertura programa social",
-  transporte         = "Transporte subsidiado"
+  transporte         = "Transporte subsidiado",
+  cuidar_comunidad   = "Cobertura Cuidar en Comunidad"
 )
 
 forest_rows_list <- lapply(available_years, function(yr) {
@@ -158,12 +161,13 @@ mock_forest_plot <- dplyr::bind_rows(forest_rows_list)
 mock_analytics_maternal <- all_data |>
   dplyr::group_by(anio) |>
   dplyr::summarise(
-    valor              = mean(valor_mm,          na.rm = TRUE),
-    traslado           = mean(traslado,           na.rm = TRUE),
-    empleo_informal    = mean(empleo_informal,    na.rm = TRUE),
-    sobrecarga         = mean(sobrecarga,         na.rm = TRUE),
-    cobertura_programa = mean(cobertura_programa, na.rm = TRUE),
-    transporte         = mean(transporte,         na.rm = TRUE),
+    valor              = mean(valor_mm,           na.rm = TRUE),
+    traslado           = mean(traslado,            na.rm = TRUE),
+    empleo_informal    = mean(empleo_informal,     na.rm = TRUE),
+    sobrecarga         = mean(sobrecarga,          na.rm = TRUE),
+    cobertura_programa = mean(cobertura_programa,  na.rm = TRUE),
+    transporte         = mean(transporte,          na.rm = TRUE),
+    cuidar_comunidad   = mean(cuidar_comunidad,    na.rm = TRUE),
     .groups = "drop"
   ) |>
   dplyr::arrange(anio)
@@ -189,6 +193,7 @@ mock_scatter_maternal <- all_data |>
   dplyr::select(
     anio, territorio, valor,
     traslado, empleo_informal, sobrecarga, cobertura_programa, transporte,
+    cuidar_comunidad,
     nacimientos
   ) |>
   dplyr::arrange(anio, territorio)
@@ -302,6 +307,7 @@ for (yr in available_years) {
   make_bivariate_geojson("sobrecarga",         paste0("mock_bivariate_sobrecarga_",         yr, ".geojson"), map_data_yr, mm_last_map_yr)
   make_bivariate_geojson("cobertura_programa", paste0("mock_bivariate_cobertura_programa_", yr, ".geojson"), map_data_yr, mm_last_map_yr)
   make_bivariate_geojson("transporte",         paste0("mock_bivariate_transporte_",         yr, ".geojson"), map_data_yr, mm_last_map_yr)
+  make_bivariate_geojson("cuidar_comunidad",   paste0("mock_bivariate_cuidar_comunidad_",   yr, ".geojson"), map_data_yr, mm_last_map_yr)
 
   make_maternal_only_geojson(paste0("mock_maternal_mortality_", yr, ".geojson"), mm_last_map_yr)
 }
@@ -351,6 +357,7 @@ for (yr in available_years) {
   make_indicator_only_geojson("sobrecarga",         paste0("mock_sobrecarga_",         yr, ".geojson"), map_data_yr)
   make_indicator_only_geojson("cobertura_programa", paste0("mock_cobertura_programa_", yr, ".geojson"), map_data_yr)
   make_indicator_only_geojson("transporte",         paste0("mock_transporte_",         yr, ".geojson"), map_data_yr)
+  make_indicator_only_geojson("cuidar_comunidad",   paste0("mock_cuidar_comunidad_",   yr, ".geojson"), map_data_yr)
 }
 
 message("✅ Single-indicator GeoJSONs saved")
@@ -392,7 +399,7 @@ make_dss_bivariate_geojson <- function(ind_x_col, ind_y_col, out_name, map_data_
 }
 
 dss_indicators <- c("traslado", "empleo_informal", "sobrecarga",
-                    "cobertura_programa", "transporte")
+                    "cobertura_programa", "transporte", "cuidar_comunidad")
 
 for (yr in available_years) {
   map_data_yr <- dplyr::filter(all_data, anio == yr) |>

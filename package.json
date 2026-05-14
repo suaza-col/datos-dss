@@ -25,6 +25,7 @@
     "r:process-journey-time": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/mock/territory/journey_time.R'",
     "r:process-transport-frequency": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/mock/transport/transport_frequency.R'",
     "r:process-smv-map": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/mock/SMV_map.R'",
+    "r:process-welfare-infant-care-support": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/mock/welfare/infant_care_support.R'",
     "r:process-smv-analytics": "docker-compose run --rm r-dev bash -c 'Rscript /workspace/packages/data-r/src/mock/analytics_maternal_mock.R'"
   },
   "dependencies": {},
