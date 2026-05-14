@@ -1,7 +1,6 @@
 # =========================================================
 # San Martín del Valle - Frecuencia de transporte público subsidiado
 # Cobertura hacia centros de salud desde barrios periféricos
-# Genera datos globales (municipio) Y datos de barrio en un solo script
 # Estratificadores: zona, etnia
 # =========================================================
 
@@ -42,8 +41,8 @@ smv_base <- read_csv(sim_csv_file, show_col_types = FALSE) %>%
   mutate(
     tipo_zona = case_when(
       tipo_zona == "Urbano central" ~ "urbano",
-      tipo_zona == "Periurbano"     ~ "periurbano",
-      tipo_zona == "Rural"          ~ "rural",
+      tipo_zona == "Periurbano" ~ "periurbano",
+      tipo_zona == "Rural" ~ "rural",
       TRUE ~ tolower(tipo_zona)
     )
   )
@@ -55,7 +54,7 @@ if (!all(c("NAME_2", "tipo_zona") %in% names(smv_base))) {
 # ---------------------------
 # 5. Parámetros generales
 # ---------------------------
-anios  <- 2016:2025
+anios <- 2016:2025
 etnias <- c("Indígena", "No indígena")
 
 # Barrios con mejoras focalizadas en rutas de transporte
@@ -73,12 +72,12 @@ base <- expand_grid(
   left_join(smv_base, by = "NAME_2") %>%
   mutate(
     prop_etnia = case_when(
-      tipo_zona == "rural"      & etnia == "Indígena"    ~ 0.45,
-      tipo_zona == "rural"      & etnia == "No indígena" ~ 0.55,
-      tipo_zona == "periurbano" & etnia == "Indígena"    ~ 0.30,
+      tipo_zona == "rural" & etnia == "Indígena" ~ 0.45,
+      tipo_zona == "rural" & etnia == "No indígena" ~ 0.55,
+      tipo_zona == "periurbano" & etnia == "Indígena" ~ 0.30,
       tipo_zona == "periurbano" & etnia == "No indígena" ~ 0.70,
-      tipo_zona == "urbano"     & etnia == "Indígena"    ~ 0.15,
-      tipo_zona == "urbano"     & etnia == "No indígena" ~ 0.85,
+      tipo_zona == "urbano" & etnia == "Indígena" ~ 0.15,
+      tipo_zona == "urbano" & etnia == "No indígena" ~ 0.85,
       TRUE ~ NA_real_
     )
   )
@@ -89,9 +88,9 @@ base <- expand_grid(
 peso_barrio <- smv_base %>%
   mutate(
     peso_zona = case_when(
-      tipo_zona == "urbano"     ~ 1.80,
+      tipo_zona == "urbano" ~ 1.80,
       tipo_zona == "periurbano" ~ 1.20,
-      tipo_zona == "rural"      ~ 0.55,
+      tipo_zona == "rural" ~ 0.55,
       TRUE ~ 1
     ),
     peso_barrio = runif(n(), 0.75, 1.25) * peso_zona
@@ -147,31 +146,26 @@ base <- base %>%
       anio == 2025 ~ 0.50,
       TRUE ~ NA_real_
     ),
-
     efecto_zona = case_when(
-      tipo_zona == "urbano"     ~  0.15,
-      tipo_zona == "periurbano" ~  0.00,
-      tipo_zona == "rural"      ~ -0.12,
+      tipo_zona == "urbano" ~ 0.15,
+      tipo_zona == "periurbano" ~ 0.00,
+      tipo_zona == "rural" ~ -0.12,
       TRUE ~ 0
     ),
-
     efecto_etnia = case_when(
       etnia == "Indígena" ~ -0.05,
       TRUE ~ 0
     ),
-
     efecto_focalizacion = case_when(
       anio >= 2022 & NAME_2 %in% barrios_focalizados ~ 0.05,
       TRUE ~ 0
     ),
-
     valor_individual =
       tendencia_anual +
-      efecto_zona +
-      efecto_etnia +
-      efecto_focalizacion +
-      variabilidad_barrio,
-
+        efecto_zona +
+        efecto_etnia +
+        efecto_focalizacion +
+        variabilidad_barrio,
     valor_individual = pmin(pmax(valor_individual, 0.00), 0.95)
   )
 
@@ -258,14 +252,14 @@ municipal_data <- bind_rows(barrio_total, barrio_etnia) %>%
 # ---------------------------
 # 13. Guardar archivos
 # ---------------------------
-csv_dir     <- file.path(output_dir, "csv")
+csv_dir <- file.path(output_dir, "csv")
 parquet_dir <- file.path(output_dir, "parquet")
 
-if (!dir.exists(csv_dir))     dir.create(csv_dir,     recursive = TRUE)
+if (!dir.exists(csv_dir)) dir.create(csv_dir, recursive = TRUE)
 if (!dir.exists(parquet_dir)) dir.create(parquet_dir, recursive = TRUE)
 
-write_csv(    global_data,   file.path(csv_dir,     "transport_frequency.csv"))
-write_parquet(global_data,   file.path(parquet_dir, "transport_frequency.parquet"))
+write_csv(global_data, file.path(csv_dir, "transport_frequency.csv"))
+write_parquet(global_data, file.path(parquet_dir, "transport_frequency.parquet"))
 
-write_csv(    municipal_data, file.path(csv_dir,     "transport_frequency_municipal.csv"))
+write_csv(municipal_data, file.path(csv_dir, "transport_frequency_municipal.csv"))
 write_parquet(municipal_data, file.path(parquet_dir, "transport_frequency_municipal.parquet"))
