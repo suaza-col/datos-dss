@@ -47,8 +47,8 @@ smv_base <- read_csv(sim_csv_file, show_col_types = FALSE) %>%
   mutate(
     tipo_zona = case_when(
       tipo_zona == "Urbano central" ~ "urbano",
-      tipo_zona == "Periurbano"     ~ "periurbano",
-      tipo_zona == "Rural"          ~ "rural",
+      tipo_zona == "Periurbano" ~ "periurbano",
+      tipo_zona == "Rural" ~ "rural",
       TRUE ~ tolower(tipo_zona)
     )
   )
@@ -108,15 +108,15 @@ riesgo_estructural_barrio <- smv_base %>%
     riesgo_estructural = rnorm(
       n(),
       mean = case_when(
-        tipo_zona == "urbano"     ~ -0.20,
-        tipo_zona == "periurbano" ~  0.35,
-        tipo_zona == "rural"      ~  0.70,
+        tipo_zona == "urbano" ~ -0.20,
+        tipo_zona == "periurbano" ~ 0.35,
+        tipo_zona == "rural" ~ 0.70,
         TRUE ~ 0
       ),
       sd = case_when(
-        tipo_zona == "urbano"     ~ 0.25,
+        tipo_zona == "urbano" ~ 0.25,
         tipo_zona == "periurbano" ~ 0.45,
-        tipo_zona == "rural"      ~ 0.60,
+        tipo_zona == "rural" ~ 0.60,
         TRUE ~ 0.30
       )
     ),
@@ -144,9 +144,9 @@ shock_barrio_anual <- expand_grid(
       n(),
       mean = 0,
       sd = case_when(
-        tipo_zona == "urbano"     ~ 0.35,
+        tipo_zona == "urbano" ~ 0.35,
         tipo_zona == "periurbano" ~ 0.75,
-        tipo_zona == "rural"      ~ 0.95,
+        tipo_zona == "rural" ~ 0.95,
         TRUE ~ 0.45
       )
     ),
@@ -160,18 +160,18 @@ shock_barrio_anual <- expand_grid(
   group_by(anio) %>%
   mutate(
     prob_hotspot = case_when(
-      tipo_zona == "urbano"     ~ 0.08,
+      tipo_zona == "urbano" ~ 0.08,
       tipo_zona == "periurbano" ~ 0.25,
-      tipo_zona == "rural"      ~ 0.35,
+      tipo_zona == "rural" ~ 0.35,
       TRUE ~ 0.10
     ),
     hotspot_dinamico = rbinom(n(), 1, prob_hotspot),
     efecto_hotspot = hotspot_dinamico * rnorm(
       n(),
       mean = case_when(
-        tipo_zona == "urbano"     ~ 0.45,
+        tipo_zona == "urbano" ~ 0.45,
         tipo_zona == "periurbano" ~ 0.90,
-        tipo_zona == "rural"      ~ 1.20,
+        tipo_zona == "rural" ~ 1.20,
         TRUE ~ 0.50
       ),
       sd = 0.35
@@ -182,11 +182,11 @@ shock_barrio_anual <- expand_grid(
       TRUE ~ 0
     ),
     efecto_pandemia_local = case_when(
-      anio == 2020 & tipo_zona == "urbano"     ~ rnorm(n(), 0.30, 0.20),
+      anio == 2020 & tipo_zona == "urbano" ~ rnorm(n(), 0.30, 0.20),
       anio == 2020 & tipo_zona == "periurbano" ~ rnorm(n(), 0.70, 0.35),
-      anio == 2020 & tipo_zona == "rural"      ~ rnorm(n(), 0.95, 0.45),
+      anio == 2020 & tipo_zona == "rural" ~ rnorm(n(), 0.95, 0.45),
       anio == 2021 & tipo_zona == "periurbano" ~ rnorm(n(), 0.35, 0.25),
-      anio == 2021 & tipo_zona == "rural"      ~ rnorm(n(), 0.45, 0.30),
+      anio == 2021 & tipo_zona == "rural" ~ rnorm(n(), 0.45, 0.30),
       TRUE ~ 0
     ),
     riesgo_latente = riesgo_estructural +
@@ -198,7 +198,7 @@ shock_barrio_anual <- expand_grid(
     shock_factor_anual = exp(
       case_when(
         anio == 2020 ~ 0.65 * riesgo_std,
-        TRUE         ~ 0.48 * riesgo_std
+        TRUE ~ 0.48 * riesgo_std
       )
     ),
     shock_factor_anual = pmin(pmax(shock_factor_anual, 0.35), 4.50)
@@ -210,12 +210,12 @@ base <- base %>%
   left_join(shock_barrio_anual, by = c("Territorio", "anio")) %>%
   mutate(
     prop_etnia = case_when(
-      tipo_zona == "rural"      & etnia == "Indígena"    ~ 0.45,
-      tipo_zona == "rural"      & etnia == "No indígena" ~ 0.55,
-      tipo_zona == "periurbano" & etnia == "Indígena"    ~ 0.30,
+      tipo_zona == "rural" & etnia == "Indígena" ~ 0.45,
+      tipo_zona == "rural" & etnia == "No indígena" ~ 0.55,
+      tipo_zona == "periurbano" & etnia == "Indígena" ~ 0.30,
       tipo_zona == "periurbano" & etnia == "No indígena" ~ 0.70,
-      tipo_zona == "urbano"     & etnia == "Indígena"    ~ 0.15,
-      tipo_zona == "urbano"     & etnia == "No indígena" ~ 0.85,
+      tipo_zona == "urbano" & etnia == "Indígena" ~ 0.15,
+      tipo_zona == "urbano" & etnia == "No indígena" ~ 0.85,
       TRUE ~ NA_real_
     ),
     prop_edad = case_when(
@@ -233,9 +233,9 @@ base <- base %>%
 base_peso_barrio <- smv_base %>%
   mutate(
     peso_zona = case_when(
-      tipo_zona == "urbano"     ~ 1.80,
+      tipo_zona == "urbano" ~ 1.80,
       tipo_zona == "periurbano" ~ 1.20,
-      tipo_zona == "rural"      ~ 0.55,
+      tipo_zona == "rural" ~ 0.55,
       TRUE ~ 1
     ),
     peso_barrio = runif(n(), 0.75, 1.25) * peso_zona
@@ -286,17 +286,17 @@ efecto_barrio <- smv_base %>%
     efecto_barrio = rlnorm(
       n(),
       meanlog = case_when(
-        tipo_zona == "urbano"     ~ log(0.90),
+        tipo_zona == "urbano" ~ log(0.90),
         tipo_zona == "periurbano" ~ log(1.00),
-        tipo_zona == "rural"      ~ log(1.10),
+        tipo_zona == "rural" ~ log(1.10),
         TRUE ~ log(1)
       ),
       sdlog = 0.12
     ),
     efecto_barrio = case_when(
-      Territorio %in% barrios_criticos & tipo_zona == "rural"      ~ efecto_barrio * 1.45,
+      Territorio %in% barrios_criticos & tipo_zona == "rural" ~ efecto_barrio * 1.45,
       Territorio %in% barrios_criticos & tipo_zona == "periurbano" ~ efecto_barrio * 1.35,
-      Territorio %in% barrios_criticos & tipo_zona == "urbano"     ~ efecto_barrio * 1.20,
+      Territorio %in% barrios_criticos & tipo_zona == "urbano" ~ efecto_barrio * 1.20,
       TRUE ~ efecto_barrio
     )
   ) %>%
@@ -306,21 +306,18 @@ base <- base %>%
   left_join(efecto_barrio, by = "Territorio") %>%
   mutate(
     tendencia = 1 - 0.015 * (anio - 2016),
-
     efecto_pandemia = case_when(
       anio == 2020 ~ 1.65,
       anio == 2021 ~ 1.30,
       anio == 2022 ~ 1.12,
       TRUE ~ 1
     ),
-
     efecto_pandemia_territorial = case_when(
       anio == 2020 & Territorio %in% barrios_criticos ~ 1.25,
       anio == 2021 & Territorio %in% barrios_criticos ~ 1.15,
       anio == 2022 & Territorio %in% barrios_criticos ~ 1.08,
       TRUE ~ 1
     ),
-
     efecto_pandemia_edad = case_when(
       anio == 2020 & grupo_edad == "10-14" ~ 1.20,
       anio == 2020 & grupo_edad == "35-49" ~ 1.15,
@@ -337,20 +334,17 @@ base <- base %>%
   mutate(
     rmm_esperada =
       45 *
-      efecto_zona[tipo_zona] *
-      efecto_edad[grupo_edad] *
-      efecto_etnia[etnia] *
-      efecto_barrio *
-      tendencia *
-      efecto_pandemia *
-      efecto_pandemia_territorial *
-      efecto_pandemia_edad *
-      shock_factor_anual,
-
+        efecto_zona[tipo_zona] *
+        efecto_edad[grupo_edad] *
+        efecto_etnia[etnia] *
+        efecto_barrio *
+        tendencia *
+        efecto_pandemia *
+        efecto_pandemia_territorial *
+        efecto_pandemia_edad *
+        shock_factor_anual,
     rmm_esperada = pmax(rmm_esperada, 5),
-
     prob_muerte = rmm_esperada / 100000,
-
     muertes_maternas = rbinom(
       n(),
       size = nacidos_vivos,
@@ -382,7 +376,7 @@ rmm_estructural_barrio <- base %>%
     mortalidad_media_objetivo = first(mortalidad_media_objetivo),
     .groups = "drop"
   ) %>%
-  group_by(anio, etnia) %>%
+  group_by(anio) %>%
   mutate(
     valor = valor_raw *
       mortalidad_media_objetivo / mean(valor_raw, na.rm = TRUE)
@@ -436,12 +430,12 @@ total_municipio_general <- tasa_mortalidad_materna_final %>%
     .groups = "drop"
   ) %>%
   mutate(
-    iso3      = "COL",
+    iso3 = "COL",
     Territorio = "San Martín del Valle",
     cod_local = NA_character_,
-    sexo      = "Mujeres",
-    zona      = "Total",
-    etnia     = "Total"
+    sexo = "Mujeres",
+    zona = "Total",
+    etnia = "Total"
   ) %>%
   select(iso3, Territorio, cod_local, anio, sexo, zona, etnia, valor)
 
@@ -453,11 +447,11 @@ total_municipio_etnia <- tasa_mortalidad_materna_final %>%
     .groups = "drop"
   ) %>%
   mutate(
-    iso3      = "COL",
+    iso3 = "COL",
     Territorio = "San Martín del Valle",
     cod_local = NA_character_,
-    sexo      = "Mujeres",
-    zona      = "Total"
+    sexo = "Mujeres",
+    zona = "Total"
   ) %>%
   select(iso3, Territorio, cod_local, anio, sexo, zona, etnia, valor)
 
@@ -469,11 +463,11 @@ municipio_zona_general <- tasa_mortalidad_materna_final %>%
     .groups = "drop"
   ) %>%
   mutate(
-    iso3      = "COL",
+    iso3 = "COL",
     Territorio = "San Martín del Valle",
     cod_local = NA_character_,
-    sexo      = "Mujeres",
-    etnia     = "Total"
+    sexo = "Mujeres",
+    etnia = "Total"
   ) %>%
   select(iso3, Territorio, cod_local, anio, sexo, zona, etnia, valor)
 
@@ -491,10 +485,10 @@ tasa_mortalidad_materna_final <- bind_rows(
 # ---------------------------
 # 14. Guardar archivos
 # ---------------------------
-csv_dir     <- file.path(output_dir, "csv")
+csv_dir <- file.path(output_dir, "csv")
 parquet_dir <- file.path(output_dir, "parquet")
 
-if (!dir.exists(csv_dir))     dir.create(csv_dir, recursive = TRUE)
+if (!dir.exists(csv_dir)) dir.create(csv_dir, recursive = TRUE)
 if (!dir.exists(parquet_dir)) dir.create(parquet_dir, recursive = TRUE)
 
 archivo_csv <- file.path(csv_dir, "maternal_mortality_rate.csv")
