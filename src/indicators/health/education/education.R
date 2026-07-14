@@ -137,23 +137,47 @@ process_education_suaza <- function(output_dir = here("outputs")) {
   dir_create(file.path(output_dir, "csv"))
   dir_create(file.path(output_dir, "parquet"))
 
-  # Output file paths
-  csv_file     <- file.path(output_dir, "csv",     "education.csv")
-  parquet_file <- file.path(output_dir, "parquet", "education.parquet")
+  # One file per indicator, each with just anio + valor
+  indicadores <- c(
+    cobertura_bruta = "education_cobertura_bruta",
+    cobertura_neta  = "education_cobertura_neta",
+    deserci_n       = "education_desercion",
+    aprobaci_n      = "education_aprobacion",
+    reprobaci_n     = "education_reprobacion",
+    repitencia      = "education_repitencia"
+  )
 
-  write_csv(education_suaza, csv_file)
-  write_parquet(education_suaza, parquet_file)
+  output_files <- character(0)
+
+  for (col in names(indicadores)) {
+    file_stub <- indicadores[[col]]
+
+    data_indicador <- education_suaza |>
+      select(anio, territorio = municipio, valor = all_of(col)) |>
+      filter(!is.na(valor))
+
+    csv_file     <- file.path(output_dir, "csv", glue("{file_stub}.csv"))
+    parquet_file <- file.path(
+      output_dir, "parquet", glue("{file_stub}.parquet")
+    )
+
+    write_csv(data_indicador, csv_file)
+    write_parquet(data_indicador, parquet_file)
+
+    message(glue("💾 {file_stub}: {csv_file}"))
+    output_files <- c(output_files, csv_file, parquet_file)
+  }
 
   message(glue("✅ Processed {nrow(education_suaza)} rows for Suaza"))
   if (nrow(education_suaza) > 0) {
-    message(glue("📅 Years: {min(education_suaza$anio)} - {max(education_suaza$anio)}"))
+    anio_min <- min(education_suaza$anio)
+    anio_max <- max(education_suaza$anio)
+    message(glue("📅 Years: {anio_min} - {anio_max}"))
   }
-  message(glue("💾 CSV:     {csv_file}"))
-  message(glue("💾 Parquet: {parquet_file}"))
 
   return(list(
     data         = education_suaza,
-    output_files = c(csv_file, parquet_file)
+    output_files = output_files
   ))
 }
 
