@@ -2,3 +2,4 @@
 **/*.quarto_ipynb
 
 outputs
+.DS_Store
