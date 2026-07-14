@@ -1,0 +1,58 @@
+services:
+  # R service for indicators processing
+  r-indicators:
+    build:
+      context: .
+      dockerfile: docker/r/Dockerfile
+    image: monorepo-r-indicators:latest
+    container_name: dss-r-indicators
+    user: root
+    working_dir: /workspace
+    volumes:
+      # Mount the R package source code
+      - ./packages/data-r:/workspace/packages/data-r
+      # Mount shared data directory
+      - ./data:/workspace/data
+      # Mount outputs directory
+      - ./outputs:/workspace/outputs
+      # Mount config files
+      - ./configs:/workspace/configs
+    environment:
+      - R_LIBS_USER=/workspace/packages/data-r/renv/library/R-4.3/x86_64-pc-linux-gnu
+      - RENV_PATHS_LIBRARY=/workspace/packages/data-r/renv/library
+    # Keep container running for development
+    tty: true
+    stdin_open: true
+    # Optional: expose RStudio Server port for web-based R IDE
+    ports:
+      - "8787:8787"
+    # Run RStudio Server in the background (optional)
+    command: >
+      bash -c "
+        if command -v rstudio-server >/dev/null 2>&1; then
+          echo 'auth-minimum-user-id=0' >> /etc/rstudio/rserver.conf &&
+          rstudio-server start &&
+          echo 'RStudio Server started on port 8787'
+        fi &&
+        R --slave --no-restore --no-save
+      "
+
+  # Development helper for R package development
+  r-dev:
+    image: monorepo-r-indicators:latest
+    container_name: dss-r-dev
+    user: root
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      - R_LIBS_USER=/workspace/packages/data-r/renv/library/R-4.3/x86_64-pc-linux-gnu
+    # Interactive R session
+    command: R
+    tty: true
+    stdin_open: true
+    profiles:
+      - dev
+
+volumes:
+  db_data:

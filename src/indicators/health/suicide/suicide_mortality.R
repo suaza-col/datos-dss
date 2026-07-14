@@ -1,7 +1,7 @@
 # ==============================
-# DSS Indicator: Suicide Mortality - Huila
+# DSS Indicator: Suicide Mortality - Suaza
 # ==============================
-# Source: Observatorio de Salud del Huila
+# Source: Observatorio de Salud de Suaza
 # Indicator: Mortalidad por suicidio (por 100.000 hab.)
 # Stratifier: sexo (gender)
 # ==============================
@@ -13,14 +13,14 @@ library(arrow)
 library(readr)
 library(fs)
 library(glue)
-source(here("packages/data-r/R/util_gaps.R"))
+source(here("R/util_gaps.R"))
 
-process_suicide_huila <- function(output_dir = here("outputs")) {
+process_suicide <- function(output_dir = here("outputs")) {
   url <- "https://www.huila.gov.co/observatoriosalud/loader.php?lServicio=Tools2&lTipo=descargas&lFuncion=descargar&idFile=84079"
 
-  temp_file <- tempfile(fileext = ".xlsx")
+  temp_file <- tempfile()
 
-  message("⬇️ Downloading suicide mortality data from Huila observatory...")
+  message("⬇️ Downloading suicide mortality data from Suaza observatory...")
   tryCatch(
     download.file(
       url = url, destfile = temp_file,
@@ -57,9 +57,8 @@ process_suicide_huila <- function(output_dir = here("outputs")) {
       sexo,
       valor,
       indicador
-    )
-
-  # filter(!is.na(valor), !is.na(anio), cod_local == "41770 - Suaza")
+    ) |>
+    filter(!is.na(valor), !is.na(anio), cod_local == "41770 - Suaza")
 
   brecha_sexo <- calcular_brechas(
     data = suicidio,
@@ -73,8 +72,16 @@ process_suicide_huila <- function(output_dir = here("outputs")) {
   )
 
   # Create output directories
-  dir_create(file.path(output_dir, "csv"))
-  dir_create(file.path(output_dir, "parquet"))
+  csv_dir <- file.path(output_dir, "csv")
+  parquet_dir <- file.path(output_dir, "parquet")
+
+  if (!dir.exists(csv_dir)) {
+    dir.create(csv_dir, recursive = TRUE)
+  }
+
+  if (!dir.exists(parquet_dir)) {
+    dir.create(parquet_dir, recursive = TRUE)
+  }
 
   # Save outputs
   suicide_csv_file <- file.path(output_dir, "csv", "suicide_mortality.csv")
@@ -105,6 +112,6 @@ process_suicide_huila <- function(output_dir = here("outputs")) {
 
 # Main execution — called from Turborepo or command line
 if (!interactive()) {
-  result <- process_suicide_huila()
-  cat("✅ Suicide mortality (Huila) processing completed\n")
+  result <- process_suicide()
+  cat("✅ Suicide mortality (Suaza) processing completed\n")
 }

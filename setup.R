@@ -3,7 +3,7 @@
 # ==============================
 # SET WORKING DIRECTORY TO PACKAGE ROOT
 # ==============================
-setwd("/workspace/packages/data-r")
+setwd("/workspace")
 
 # ==============================
 # Initial Package Setup
@@ -45,7 +45,7 @@ setup_package_structure <- function() {
   fs::dir_create("config")
 
   # Create output directories
-  # fs::dir_create("outputs/csv")
+  fs::dir_create("outputs/csv")
   # fs::dir_create("outputs/parquet")
   # fs::dir_create("outputs/arrow")
 
