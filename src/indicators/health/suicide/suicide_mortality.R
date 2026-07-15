@@ -110,7 +110,6 @@ process_suicide <- function(output_dir = here("outputs")) {
   ))
 }
 
-# Main execution — called from Turborepo or command line
 if (!interactive()) {
   result <- process_suicide()
   cat("✅ Suicide mortality (Suaza) processing completed\n")
