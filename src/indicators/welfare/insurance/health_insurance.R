@@ -36,8 +36,7 @@ process_health_insurance <- function(output_dir = here("outputs")) {
 
   insurance <- health_insurance_raw |>
     mutate(
-      valor     = `Asegurados` / `Población` * 100000,
-      indicador = "Aseguramiento (100.000 hab.)"
+      valor = `Cobertura de aseguramiento`
     ) |>
     rename(
       anio            = Año,
