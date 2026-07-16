@@ -27,7 +27,8 @@
     "r:process-transport-frequency": "docker-compose run --rm r-dev bash -c 'Rscript src/mock/transport/transport_frequency.R'",
     "r:process-smv-map": "docker-compose run --rm r-dev bash -c 'Rscript src/mock/SMV_map.R'",
     "r:process-welfare-infant-care-support": "docker-compose run --rm r-dev bash -c 'Rscript src/mock/welfare/infant_care_support.R'",
-    "r:process-smv-analytics": "docker-compose run --rm r-dev bash -c 'Rscript src/mock/analytics_maternal_mock.R'"
+    "r:process-smv-analytics": "docker-compose run --rm r-dev bash -c 'Rscript src/mock/analytics_maternal_mock.R'",
+    "r:process-suaza-analytics": "docker-compose run --rm r-dev bash -c 'Rscript src/colombia/huila/suaza/analytics.R'"
   },
   "dependencies": {},
   "devDependencies": {},
