@@ -18,7 +18,6 @@
     "r:process-suicide": "docker-compose run --rm r-dev bash -c 'Rscript src/indicators/health/suicide/suicide_mortality.R'",
     "r:process-education": "docker-compose run --rm r-dev bash -c 'Rscript src/indicators/education/education.R'",
     "r:process-health-insurance": "docker-compose run --rm r-dev bash -c 'Rscript src/indicators/welfare/insurance/health_insurance.R'",
-    "r:process-analytics": "docker-compose run --rm r-dev bash -c 'Rscript src/indicators/health/analytics/analytics_suaza.R'",
     "r:process-huila-map": "docker-compose run --rm r-dev bash -c 'Rscript src/huila_map/huila_map.R'",
     "r:process-maternal-mortality-rate": "docker-compose run --rm r-dev bash -c 'Rscript src/mock/health/maternal_mortality/maternal_mortality_rate.R'",
     "r:process-informal-employment": "docker-compose run --rm r-dev bash -c 'Rscript src/mock/employment/informal_employment.R'",
