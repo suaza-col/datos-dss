@@ -106,7 +106,7 @@ indicator_meta <- list(
   reprobacion = "Reprobación escolar",
   repitencia = "Repitencia escolar",
   aseguramiento = "Cobertura de aseguramiento en salud",
-  formalidad = "Empleo formal"
+  formalidad = "Cobertura de formalidad"
 )
 
 # ── 5. Forest plot: Spearman correlations across years, one row per indicator ─
@@ -140,23 +140,7 @@ suaza_analytics <- all_data |>
     repitencia, aseguramiento, formalidad
   )
 
-# ── 7. Scatter: long table, one row per (anio, indicador) pair ────────────────
-
-suaza_scatter <- all_data |>
-  tidyr::pivot_longer(
-    cols = names(indicator_meta),
-    names_to = "indicador",
-    values_to = "valor_indicador"
-  ) |>
-  dplyr::mutate(
-    territorio = "Suaza",
-    label = unlist(indicator_meta[indicador])
-  ) |>
-  dplyr::filter(!is.na(valor_indicador), !is.na(valor_suicidio)) |>
-  dplyr::select(anio, territorio, indicador, label, valor_indicador, valor_suicidio) |>
-  dplyr::arrange(indicador, anio)
-
-# ── 8. Save parquet + CSV outputs ──────────────────────────────────────────────
+# ── 7. Save parquet + CSV outputs ──────────────────────────────────────────────
 
 parquet_dir <- file.path(output_dir, "parquet")
 csv_dir <- file.path(output_dir, "csv")
@@ -165,10 +149,8 @@ dir.create(csv_dir, showWarnings = FALSE, recursive = TRUE)
 
 write_parquet(suaza_forest_plot, file.path(parquet_dir, "suaza_forest_plot.parquet"))
 write_parquet(suaza_analytics, file.path(parquet_dir, "suaza_analytics.parquet"))
-write_parquet(suaza_scatter, file.path(parquet_dir, "suaza_scatter.parquet"))
 
 write_csv(suaza_forest_plot, file.path(csv_dir, "suaza_forest_plot.csv"))
 write_csv(suaza_analytics, file.path(csv_dir, "suaza_analytics.csv"))
-write_csv(suaza_scatter, file.path(csv_dir, "suaza_scatter.csv"))
 
-message("✅ suaza_forest_plot, suaza_analytics, suaza_scatter saved")
+message("✅ suaza_forest_plot, suaza_analytics saved")
