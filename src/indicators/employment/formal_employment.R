@@ -55,9 +55,9 @@ process_formal_employment <- function(output_dir = here("outputs")) {
       Indicador == "Porcentaje de personas ocupadas formalmente con respecto a la población total"
     ) |>
     transmute(
+      anio = as.numeric(Año),
       territorio = Entidad,
-      anio       = as.numeric(Año),
-      valor      = as.numeric(
+      valor = as.numeric(
         gsub(",", ".", gsub("\\.", "", as.character(`Dato Numérico`)))
       )
     ) |>
