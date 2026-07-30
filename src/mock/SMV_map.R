@@ -6,8 +6,8 @@
 # and a synthetic indicator value.
 #
 # Outputs:
-#   outputs/geojson/SMV_municipalities.geojson
-#   outputs/csv/SMV_map.csv
+#   outputs/geojson/SMV-municipalities.geojson
+#   outputs/csv/SMV-map.csv
 # ==============================
 
 library(here)
@@ -84,7 +84,7 @@ process_SMV_map <- function(output_dir = here("outputs")) {
 
   # Reserve the first two periurbano units for the extra names
   idx_reservados <- idx_peri[1:2]
-  idx_restantes  <- setdiff(seq_len(nrow(SMV_muni)), idx_reservados)
+  idx_restantes <- setdiff(seq_len(nrow(SMV_muni)), idx_reservados)
 
   SMV_muni$barrio[idx_restantes] <- sample(barrios, size = length(idx_restantes), replace = FALSE)
   SMV_muni$barrio[idx_reservados] <- barrios_peri_extra
@@ -117,10 +117,10 @@ process_SMV_map <- function(output_dir = here("outputs")) {
   # ── Export ───────────────────────────────────────────────────────────────────
 
   dir.create(file.path(output_dir, "geojson"), recursive = TRUE, showWarnings = FALSE)
-  dir.create(file.path(output_dir, "csv"),     recursive = TRUE, showWarnings = FALSE)
+  dir.create(file.path(output_dir, "csv"), recursive = TRUE, showWarnings = FALSE)
 
-  geojson_file <- file.path(output_dir, "geojson", "SMV_municipalities.geojson")
-  csv_file     <- file.path(output_dir, "csv",     "SMV_map.csv")
+  geojson_file <- file.path(output_dir, "geojson", "SMV-municipalities.geojson")
+  csv_file <- file.path(output_dir, "csv", "SMV-map.csv")
 
   # Convert to sf, keep only the columns the frontend needs
   SMV_sf <- sf::st_as_sf(SMV_muni)

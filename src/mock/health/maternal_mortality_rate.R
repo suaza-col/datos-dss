@@ -37,10 +37,10 @@ set.seed(1234)
 # ---------------------------
 # 4. Leer base territorial
 # ---------------------------
-sim_csv_file <- file.path(output_dir, "csv", "SMV_map.csv")
+sim_csv_file <- file.path(output_dir, "csv", "SMV-map.csv")
 
 if (!file.exists(sim_csv_file)) {
-  stop("No existe 'SMV_map.csv'. Primero debes guardar la base territorial.")
+  stop("No existe 'SMV-map.csv'. Primero debes guardar la base territorial.")
 }
 
 smv_base <- read_csv(sim_csv_file, show_col_types = FALSE) %>%
@@ -66,7 +66,7 @@ smv_base <- smv_base %>%
   filter(!Territorio %in% territorios_excluir)
 
 if (!all(c("Territorio", "tipo_zona") %in% names(smv_base))) {
-  stop("El archivo SMV_map.csv debe contener las columnas 'Territorio' y 'tipo_zona'.")
+  stop("El archivo SMV-map.csv debe contener las columnas 'Territorio' y 'tipo_zona'.")
 }
 
 # ---------------------------
@@ -491,10 +491,10 @@ parquet_dir <- file.path(output_dir, "parquet")
 if (!dir.exists(csv_dir)) dir.create(csv_dir, recursive = TRUE)
 if (!dir.exists(parquet_dir)) dir.create(parquet_dir, recursive = TRUE)
 
-archivo_csv <- file.path(csv_dir, "maternal_mortality_rate.csv")
+archivo_csv <- file.path(csv_dir, "mortalidad-materna.csv")
 write_csv(tasa_mortalidad_materna_final, archivo_csv)
 
-archivo_parquet <- file.path(parquet_dir, "maternal_mortality_rate.parquet")
+archivo_parquet <- file.path(parquet_dir, "mortalidad-materna.parquet")
 write_parquet(tasa_mortalidad_materna_final, archivo_parquet)
 
 # ---------------------------
@@ -579,12 +579,12 @@ tabla_brecha_rural_urbano <- calcular_brecha_zona(
   data = tasa_mortalidad_materna_final,
   zona_desfavorecida = "rural",
   zona_favorecida = "urbano",
-  nombre_archivo = "tabla_brecha_rural_urbano_mortalidad_SMV.csv"
+  nombre_archivo = "tabla-brecha-rural-urbano-mortalidad-SMV.csv"
 )
 
 tabla_brecha_periurbano_urbano <- calcular_brecha_zona(
   data = tasa_mortalidad_materna_final,
   zona_desfavorecida = "periurbano",
   zona_favorecida = "urbano",
-  nombre_archivo = "tabla_brecha_periurbano_urbano_mortalidad_SMV.csv"
+  nombre_archivo = "tabla-brecha-periurbano-urbano-mortalidad-SMV.csv"
 )

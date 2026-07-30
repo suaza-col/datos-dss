@@ -7,12 +7,10 @@
 #   outputs/parquet/forest_plot.parquet
 #   outputs/parquet/analytics.parquet
 #   outputs/parquet/scatter.parquet
-#   outputs/geojson/bivariate_{indicator}_{year}.geojson  (per indicator × year)
-#   outputs/geojson/maternal_mortality_{year}.geojson     (per year)
-#   outputs/geojson/bivariate_dss_{ind_x}_{ind_y}_{year}.geojson (per pair × year)
+#   outputs/geojson/bivariate-{indicator}-{year}.geojson  (per indicator × year)
+#   outputs/geojson/mortalidad-materna-{year}.geojson     (per year)
+#   outputs/geojson/bivariate-dss-{ind_x}-{ind_y}-{year}.geojson (per pair × year)
 #
-# Run AFTER: SMV_map.R, maternal_mortality_rate.R, and all five
-#            *_municipal.R scripts have been executed.
 # ==============================
 
 library(here)
@@ -94,7 +92,7 @@ classify_tercile <- function(x) {
 # ── 1. Load maternal mortality barrio-level data ──────────────────────────────
 
 mm_raw <- read_parquet(
-  file.path(output_dir, "parquet", "maternal_mortality_rate.parquet")
+  file.path(output_dir, "parquet", "mortalidad-materna.parquet")
 )
 
 mm_barrio <- mm_raw |>
@@ -106,12 +104,12 @@ mm_barrio <- mm_raw |>
 
 # ── 2. Load each DSS indicator's barrio-level data ────────────────────────────
 
-traslado_df <- load_barrio("journey_time.parquet", "traslado")
-empleo_df <- load_barrio("informal_employment.parquet", "embarazadas-empleo-informal")
-sobrecarga_df <- load_barrio("care_overload_municipal.parquet", "sobrecarga")
-cobertura_df <- load_barrio("program_cover.parquet", "cobertura_programa")
-transporte_df <- load_barrio("transport_frequency_municipal.parquet", "transporte")
-cuidar_comunidad_df <- load_barrio("infant_care_support_municipal.parquet", "cuidar_comunidad")
+traslado_df <- load_barrio("traslado.parquet", "traslado")
+empleo_df <- load_barrio("embarazadas-empleo-informal.parquet", "embarazadas-empleo-informal")
+sobrecarga_df <- load_barrio("sobrecarga-embarazadas.parquet", "sobrecarga-embarazadas")
+cobertura_df <- load_barrio("apoyo-embarazadas.parquet", "apoyo-embarazadas")
+transporte_df <- load_barrio("frecuencia-transporte.parquet", "frecuencia-transporte")
+cuidar_comunidad_df <- load_barrio("apoyo-infantil.parquet", "apoyo-infantil")
 
 # ── 3. Join all indicators ────────────────────────────────────────────────────
 
@@ -134,10 +132,10 @@ last_year <- max(available_years)
 indicator_meta <- list(
   traslado = "Tiempo de traslado (>1h al CS)",
   "embarazadas-empleo-informal" = "Empleo informal",
-  sobrecarga = "Sobrecarga de cuidados",
-  cobertura_programa = "Cobertura programa social",
-  transporte = "Transporte subsidiado",
-  cuidar_comunidad = "Cobertura Cuidar en Comunidad"
+  "sobrecarga-embarazadas" = "Sobrecarga de cuidados",
+  "apoyo-embarazadas" = "Cobertura programa social",
+  "frecuencia-transporte" = "Transporte subsidiado",
+  "apoyo-infantil" = "Cobertura Cuidar en Comunidad"
 )
 
 forest_rows_list <- lapply(available_years, function(yr) {
@@ -171,12 +169,12 @@ analytics <- all_data |>
   dplyr::group_by(anio) |>
   dplyr::summarise(
     valor = mean(valor_mm, na.rm = TRUE),
-    "embarazadas-empleo-informal" = mean(traslado, na.rm = TRUE),
-    empleo_informal = mean(empleo_informal, na.rm = TRUE),
-    sobrecarga = mean(sobrecarga, na.rm = TRUE),
-    cobertura_programa = mean(cobertura_programa, na.rm = TRUE),
-    transporte = mean(transporte, na.rm = TRUE),
-    cuidar_comunidad = mean(cuidar_comunidad, na.rm = TRUE),
+    traslado = mean(traslado, na.rm = TRUE),
+    "embarazadas-empleo-informal" = mean(`embarazadas-empleo-informal`, na.rm = TRUE),
+    "sobrecarga-embarazadas" = mean(`sobrecarga-embarazadas`, na.rm = TRUE),
+    "apoyo-embarazadas" = mean(`apoyo-embarazadas`, na.rm = TRUE),
+    "frecuencia-transporte" = mean(`frecuencia-transporte`, na.rm = TRUE),
+    "apoyo-infantil" = mean(`apoyo-infantil`, na.rm = TRUE),
     .groups = "drop"
   ) |>
   dplyr::arrange(anio)
@@ -201,8 +199,8 @@ scatter <- all_data |>
   dplyr::rename(territorio = Territorio, valor = valor_mm) |>
   dplyr::select(
     anio, territorio, valor,
-    traslado, "embarazadas-empleo-informal", sobrecarga, cobertura_programa, transporte,
-    cuidar_comunidad,
+    traslado, "embarazadas-empleo-informal", "sobrecarga-embarazadas", "apoyo-embarazadas", "frecuencia-transporte",
+    "apoyo-infantil",
     nacimientos
   ) |>
   dplyr::arrange(anio, territorio)
@@ -214,15 +212,15 @@ csv_dir <- file.path(output_dir, "csv")
 dir.create(parquet_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create(csv_dir, showWarnings = FALSE, recursive = TRUE)
 
-write_parquet(forest_plot, file.path(parquet_dir, "forest_plot.parquet"))
+write_parquet(forest_plot, file.path(parquet_dir, "forest-plot.parquet"))
 write_parquet(analytics, file.path(parquet_dir, "analytics.parquet"))
 write_parquet(scatter, file.path(parquet_dir, "scatter.parquet"))
 
-write_csv(forest_plot, file.path(csv_dir, "forest_plot.csv"))
+write_csv(forest_plot, file.path(csv_dir, "forest-plot.csv"))
 write_csv(analytics, file.path(csv_dir, "analytics.csv"))
 write_csv(scatter, file.path(csv_dir, "scatter.csv"))
 
-message("✅ forest_plot, analytics, scatter saved")
+message("✅ forest-plot, analytics, scatter saved")
 
 # ── 8. Per-year bivariate and maternal GeoJSONs ───────────────────────────────
 #
@@ -238,7 +236,7 @@ bivariate_colors <- matrix(c(
 ), nrow = 3, byrow = TRUE)
 
 # Load base geometry
-geojson_path <- file.path(output_dir, "geojson", "SMV_municipalities.geojson")
+geojson_path <- file.path(output_dir, "geojson", "SMV-municipalities.geojson")
 smv_sf <- sf::st_read(geojson_path, quiet = TRUE)
 
 ylord <- RColorBrewer::brewer.pal(5, "YlOrRd")
@@ -320,14 +318,14 @@ for (yr in available_years) {
     dplyr::select(territorio, valor_mm) |>
     dplyr::mutate(mm_class = classify_tercile(valor_mm))
 
-  make_bivariate_geojson("traslado", paste0("bivariate-traslado_", yr, ".geojson"), map_data_yr, mm_last_map_yr)
+  make_bivariate_geojson("traslado", paste0("bivariate-traslado-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
   make_bivariate_geojson("embarazadas-empleo-informal", paste0("bivariate-embarazadas-empleo-informal-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
-  make_bivariate_geojson("sobrecarga", paste0("bivariate-sobrecarga_", yr, ".geojson"), map_data_yr, mm_last_map_yr)
-  make_bivariate_geojson("cobertura_programa", paste0("bivariate-cobertura_programa_", yr, ".geojson"), map_data_yr, mm_last_map_yr)
-  make_bivariate_geojson("transporte", paste0("bivariate-transporte_", yr, ".geojson"), map_data_yr, mm_last_map_yr)
-  make_bivariate_geojson("cuidar_comunidad", paste0("bivariate-cuidar_comunidad_", yr, ".geojson"), map_data_yr, mm_last_map_yr)
+  make_bivariate_geojson("sobrecarga-embarazadas", paste0("bivariate-sobrecarga-embarazadas-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
+  make_bivariate_geojson("apoyo-embarazadas", paste0("bivariate-apoyo-embarazadas-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
+  make_bivariate_geojson("frecuencia-transporte", paste0("bivariate-transporte-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
+  make_bivariate_geojson("apoyo-infantil", paste0("bivariate-apoyo-infantil-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
 
-  make_maternal_only_geojson(paste0("maternal_mortality_", yr, ".geojson"), mm_last_map_yr)
+  make_maternal_only_geojson(paste0("mortalidad-materna-", yr, ".geojson"), mm_last_map_yr)
 }
 
 # ── 8.5. Per-year single-indicator GeoJSONs (one per DSS indicator) ──────────
@@ -374,12 +372,12 @@ for (yr in available_years) {
   map_data_yr <- dplyr::filter(all_data, anio == yr) |>
     dplyr::rename(territorio = Territorio)
 
-  make_indicator_only_geojson("traslado", paste0("traslado_", yr, ".geojson"), map_data_yr)
+  make_indicator_only_geojson("traslado", paste0("traslado-", yr, ".geojson"), map_data_yr)
   make_indicator_only_geojson("embarazadas-empleo-informal", paste0("embarazadas-empleo-informal-", yr, ".geojson"), map_data_yr)
-  make_indicator_only_geojson("sobrecarga", paste0("sobrecarga_", yr, ".geojson"), map_data_yr)
-  make_indicator_only_geojson("cobertura_programa", paste0("cobertura_programa_", yr, ".geojson"), map_data_yr)
-  make_indicator_only_geojson("transporte", paste0("transporte_", yr, ".geojson"), map_data_yr)
-  make_indicator_only_geojson("cuidar_comunidad", paste0("cuidar_comunidad_", yr, ".geojson"), map_data_yr)
+  make_indicator_only_geojson("sobrecarga-embarazadas", paste0("sobrecarga-embarazadas-", yr, ".geojson"), map_data_yr)
+  make_indicator_only_geojson("apoyo-embarazadas", paste0("apoyo-embarazadas-", yr, ".geojson"), map_data_yr)
+  make_indicator_only_geojson("frecuencia-transporte", paste0("transporte-", yr, ".geojson"), map_data_yr)
+  make_indicator_only_geojson("apoyo-infantil", paste0("apoyo-infantil-", yr, ".geojson"), map_data_yr)
 }
 
 message("✅ Single-indicator GeoJSONs saved")
@@ -426,8 +424,8 @@ make_dss_bivariate_geojson <- function(ind_x_col, ind_y_col, out_name, map_data_
 }
 
 dss_indicators <- c(
-  "traslado", "embarazadas-empleo-informal", "sobrecarga",
-  "cobertura_programa", "transporte", "cuidar_comunidad"
+  "traslado", "embarazadas-empleo-informal", "sobrecarga-embarazadas",
+  "apoyo-embarazadas", "frecuencia-transporte", "apoyo-infantil"
 )
 
 for (yr in available_years) {
@@ -437,11 +435,11 @@ for (yr in available_years) {
   for (ind_x in dss_indicators) {
     for (ind_y in dss_indicators) {
       if (ind_x != ind_y) {
-        out_name <- paste0("bivariate_dss_", ind_x, "_", ind_y, "_", yr, ".geojson")
+        out_name <- paste0("bivariate-dss-", ind_x, "-", ind_y, "-", yr, ".geojson")
         make_dss_bivariate_geojson(ind_x, ind_y, out_name, map_data_yr)
       }
     }
   }
 }
 
-message("\n✅ analytics_mock.R complete")
+message("\n✅ mortalidad-materna.R complete")

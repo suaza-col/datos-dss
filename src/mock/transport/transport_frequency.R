@@ -31,10 +31,10 @@ set.seed(6060)
 # ---------------------------
 # 4. Leer base territorial
 # ---------------------------
-sim_csv_file <- file.path(output_dir, "csv", "SMV_map.csv")
+sim_csv_file <- file.path(output_dir, "csv", "SMV-map.csv")
 
 if (!file.exists(sim_csv_file)) {
-  stop("No existe 'SMV_map.csv'. Primero debes guardar la base territorial.")
+  stop("No existe 'SMV-map.csv'. Primero debes guardar la base territorial.")
 }
 
 smv_base <- read_csv(sim_csv_file, show_col_types = FALSE) %>%
@@ -42,21 +42,21 @@ smv_base <- read_csv(sim_csv_file, show_col_types = FALSE) %>%
   mutate(
     zona_base = case_when(
       zona_base %in% c("Urbano central", "urbano", "Urbano") ~ "Urbano",
-      zona_base %in% c("Periurbano", "periurbano")           ~ "Periurbano",
-      zona_base %in% c("Rural", "rural")                     ~ "Rural",
+      zona_base %in% c("Periurbano", "periurbano") ~ "Periurbano",
+      zona_base %in% c("Rural", "rural") ~ "Rural",
       TRUE ~ zona_base
     )
   ) %>%
   filter(!Territorio %in% c("Colombia", "Baraya", "San Agustín"))
 
 if (!all(c("Territorio", "zona_base") %in% names(smv_base))) {
-  stop("El archivo SMV_map.csv debe contener las columnas 'Territorio' y 'tipo_zona'.")
+  stop("El archivo SMV-map.csv debe contener las columnas 'Territorio' y 'tipo_zona'.")
 }
 
 # ---------------------------
 # 5. Parámetros generales
 # ---------------------------
-anios  <- 2016:2025
+anios <- 2016:2025
 etnias <- c("Indígena", "No indígena")
 
 # ---------------------------
@@ -79,10 +79,10 @@ efecto_barrio_anual <- expand_grid(
       n(),
       mean = 0,
       sd = case_when(
-        zona_base == "Urbano"     ~ 0.08,
+        zona_base == "Urbano" ~ 0.08,
         zona_base == "Periurbano" ~ 0.14,
-        zona_base == "Rural"      ~ 0.18,
-        TRUE                      ~ 0.10
+        zona_base == "Rural" ~ 0.18,
+        TRUE ~ 0.10
       )
     ),
     ruido_persistente = as.numeric(stats::filter(
@@ -98,10 +98,10 @@ efecto_barrio_anual <- expand_grid(
       n(),
       1,
       prob = case_when(
-        zona_base == "Urbano"     ~ 0.08,
+        zona_base == "Urbano" ~ 0.08,
         zona_base == "Periurbano" ~ 0.18,
-        zona_base == "Rural"      ~ 0.22,
-        TRUE                      ~ 0.10
+        zona_base == "Rural" ~ 0.22,
+        TRUE ~ 0.10
       )
     ),
     efecto_hotspot = hotspot_temporal * runif(
@@ -138,9 +138,9 @@ base <- expand_grid(
       TRUE ~ NA_real_
     ),
     efecto_zona = case_when(
-      zona_base == "Urbano"     ~  0.01,
-      zona_base == "Periurbano" ~  0.00,
-      zona_base == "Rural"      ~ -0.01,
+      zona_base == "Urbano" ~ 0.01,
+      zona_base == "Periurbano" ~ 0.00,
+      zona_base == "Rural" ~ -0.01,
       TRUE ~ 0
     ),
     efecto_etnia = case_when(
@@ -148,17 +148,17 @@ base <- expand_grid(
       TRUE ~ 0
     ),
     efecto_focalizacion = case_when(
-      anio >= 2023 & Territorio == "Ribera Sur"                          ~ 0.015,
+      anio >= 2023 & Territorio == "Ribera Sur" ~ 0.015,
       anio >= 2023 & Territorio %in% c("El Progreso", "Nueva Esperanza") ~ 0.008,
       TRUE ~ 0
     ),
     valor_individual =
       tendencia_anual +
-      efecto_zona +
-      efecto_etnia +
-      efecto_focalizacion +
-      ruido_persistente +
-      efecto_hotspot,
+        efecto_zona +
+        efecto_etnia +
+        efecto_focalizacion +
+        ruido_persistente +
+        efecto_hotspot,
     valor_individual = pmin(pmax(valor_individual, 0.00), 0.90)
   )
 
@@ -253,19 +253,19 @@ transport_frequency_final <- bind_rows(
 # ---------------------------
 # 12. Guardar archivos
 # ---------------------------
-csv_dir     <- file.path(output_dir, "csv")
+csv_dir <- file.path(output_dir, "csv")
 parquet_dir <- file.path(output_dir, "parquet")
 
-if (!dir.exists(csv_dir))     dir.create(csv_dir,     recursive = TRUE)
+if (!dir.exists(csv_dir)) dir.create(csv_dir, recursive = TRUE)
 if (!dir.exists(parquet_dir)) dir.create(parquet_dir, recursive = TRUE)
 
 # Global + barrio combined (used by filterEtniaStratifiedRows in the frontend)
-write_csv(    transport_frequency_final, file.path(csv_dir,     "transport_frequency.csv"))
-write_parquet(transport_frequency_final, file.path(parquet_dir, "transport_frequency.parquet"))
+write_csv(transport_frequency_final, file.path(csv_dir, "frecuencia-transporte.csv"))
+write_parquet(transport_frequency_final, file.path(parquet_dir, "frecuencia-transporte.parquet"))
 
 # Municipal/barrio subset for analytics scatter (excludes San Martín del Valle aggregate)
 transport_municipal <- transport_frequency_final %>%
   filter(Territorio != "San Martín del Valle", etnia == "Total")
 
-write_csv(    transport_municipal, file.path(csv_dir,     "transport_frequency_municipal.csv"))
-write_parquet(transport_municipal, file.path(parquet_dir, "transport_frequency_municipal.parquet"))
+write_csv(transport_municipal, file.path(csv_dir, "frecuencia-transporte-municipal.csv"))
+write_parquet(transport_municipal, file.path(parquet_dir, "frecuencia-transporte-municipal.parquet"))

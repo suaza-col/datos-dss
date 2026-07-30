@@ -1,52 +1,3 @@
-# Municipal Map
-huila_map:
-  id: "HUILA_MUNICIPAL_MAP"
-  names:
-    es: "Mapa municipal de Huila - Comparación entre municipios"
-    en: "Huila Municipal Map - Inter-municipality comparison"
-  source:
-    name: "GADM (Global Administrative Areas Database)"
-    url: "https://gadm.org/"
-  category: "health/spatial"
-  processing:
-    type: "spatial"
-    script: "src/indicators/health/huila_map/huila_map.R"
-  output:
-    format: ["geojson", "csv"]
-    structure: "spatial"
-    files:
-      - "map_cobertura_bruta"
-      - "map_cobertura_neta"
-      - "map_desercion"
-      - "map_aprobacion"
-      - "map_reprobacion"
-      - "map_repitencia"
-      - "map"
-    columns:
-      - name: "municipio"
-        type: "character"
-        description: "Municipality name"
-      - name: "cobertura_bruta"
-        type: "numeric"
-        description: "Gross coverage rate (%)"
-      - name: "cobertura_neta"
-        type: "numeric"
-        description: "Net coverage rate (%)"
-      - name: "desercion"
-        type: "numeric"
-        description: "Dropout rate (%)"
-      - name: "aprobacion"
-        type: "numeric"
-        description: "Pass rate (%)"
-      - name: "reprobacion"
-        type: "numeric"
-        description: "Fail rate (%)"
-      - name: "repitencia"
-        type: "numeric"
-        description: "Repetition rate (%)"
-  updated: "2026-03-14"
-
-# SMV Mock Map — must run before all simulation scripts that read SMV_map.csv
 smv_map:
   id: "SMV_MOCK_MAP"
   names:
@@ -67,7 +18,6 @@ smv_map:
       - "SMV_map"
   updated: "2026-04-14"
 
-# Maternal Mortality Rate — reads SMV_map.csv; must run after smv_map
 maternal_mortality_rate:
   id: "MATERNAL_MORTALITY_RATE"
   names:
@@ -103,8 +53,6 @@ maternal_mortality_rate:
         type: "numeric"
   updated: "2026-05-13"
 
-# Journey Time — merged global + barrio script; reads SMV_map.csv
-# Writes journey_time.parquet (global) and journey_time_municipal.parquet (barrio)
 journey_time:
   id: "JOURNEY_TIME"
   names:
@@ -140,8 +88,6 @@ journey_time:
         type: "numeric"
   updated: "2026-05-13"
 
-# Informal Employment — merged global + barrio script; reads SMV_map.csv
-# Writes informal_employment.parquet (global) and informal_employment_municipal.parquet (barrio)
 informal_employment:
   id: "informal_employment"
   names:
@@ -175,8 +121,6 @@ informal_employment:
         type: "numeric"
   updated: "2026-05-13"
 
-# Program Cover — merged global + barrio script; reads SMV_map.csv
-# Writes program_cover.parquet (global) and program_cover_municipal.parquet (barrio)
 program_cover:
   id: "program_cover"
   names:
@@ -208,8 +152,6 @@ program_cover:
         type: "numeric"
   updated: "2026-05-13"
 
-# Transport Frequency — merged global + barrio script; reads SMV_map.csv
-# Writes transport_frequency.parquet (global) and transport_frequency_municipal.parquet (barrio)
 transport_frequency:
   id: "transport_frequency"
   names:
@@ -228,8 +170,6 @@ transport_frequency:
       - "transport_frequency"
   updated: "2026-05-13"
 
-# Infant Care Support — reads SMV_map.csv; must run after smv_map
-# Writes infant_care_support.parquet (global) and infant_care_support_municipal.parquet (barrio)
 infant_care_support:
   id: "infant_care_support"
   names:
@@ -264,8 +204,6 @@ infant_care_support:
         type: "numeric"
   updated: "2026-05-14"
 
-# Care Overload — reads SMV_map.csv AND maternal_mortality_rate.csv
-# Must run after smv_map and maternal_mortality_rate
 care_overload_municipal:
   id: "care_overload_municipal"
   names:
@@ -284,12 +222,10 @@ care_overload_municipal:
       - "care_overload_municipal"
   updated: "2026-05-13"
 
-# SMV Analytics — must run last; reads combined parquet files from each indicator script
 smv_analytics:
   id: "smv_analytics"
   names:
-    es: "SMV Analytics"
-    en: "SMV Analytics"
+    en: "San Martín del Valle Mock Analytics"
   source:
     name: "Mock"
   category: "analytics"
@@ -300,12 +236,13 @@ smv_analytics:
     format: ["csv", "parquet", "geojson"]
     structure: "long"
     files:
-      - "mock_bivariate_traslado"
-      - "mock_bivariate_empleo_informal"
-      - "mock_bivariate_sobrecarga"
-      - "mock_bivariate_cobertura_programa"
-      - "mock_bivariate_transporte"
-      - "mock_bivariate_cuidar_comunidad"
-      - "mock_maternal_mortality"
-      - "mock_scatter_maternal"
+      - "bivariate-traslado"
+      - "bivariate-embarazadas-empleo-informal"
+      - "bivariate-sobrecarga-embarazadas"
+      - "bivariate-apoyo-embarazadas"
+      - "bivariate-transporte"
+      - "bivariate-apoyo-infantil"
+      - "analytics"
+      - "scatter"
+      - "forest-plot"
   updated: "2026-05-14"
