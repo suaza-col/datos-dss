@@ -322,7 +322,7 @@ for (yr in available_years) {
   make_bivariate_geojson("embarazadas-empleo-informal", paste0("bivariate-embarazadas-empleo-informal-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
   make_bivariate_geojson("sobrecarga-embarazadas", paste0("bivariate-sobrecarga-embarazadas-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
   make_bivariate_geojson("apoyo-embarazadas", paste0("bivariate-apoyo-embarazadas-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
-  make_bivariate_geojson("frecuencia-transporte", paste0("bivariate-transporte-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
+  make_bivariate_geojson("frecuencia-transporte", paste0("bivariate-frecuencia-transporte-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
   make_bivariate_geojson("apoyo-infantil", paste0("bivariate-apoyo-infantil-", yr, ".geojson"), map_data_yr, mm_last_map_yr)
 
   make_maternal_only_geojson(paste0("mortalidad-materna-", yr, ".geojson"), mm_last_map_yr)
@@ -376,7 +376,7 @@ for (yr in available_years) {
   make_indicator_only_geojson("embarazadas-empleo-informal", paste0("embarazadas-empleo-informal-", yr, ".geojson"), map_data_yr)
   make_indicator_only_geojson("sobrecarga-embarazadas", paste0("sobrecarga-embarazadas-", yr, ".geojson"), map_data_yr)
   make_indicator_only_geojson("apoyo-embarazadas", paste0("apoyo-embarazadas-", yr, ".geojson"), map_data_yr)
-  make_indicator_only_geojson("frecuencia-transporte", paste0("transporte-", yr, ".geojson"), map_data_yr)
+  make_indicator_only_geojson("frecuencia-transporte", paste0("frecuencia-transporte-", yr, ".geojson"), map_data_yr)
   make_indicator_only_geojson("apoyo-infantil", paste0("apoyo-infantil-", yr, ".geojson"), map_data_yr)
 }
 
