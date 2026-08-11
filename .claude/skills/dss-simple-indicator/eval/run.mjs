@@ -159,6 +159,64 @@ function runTrial({ bin, model, prompt, caseId, trial }) {
   });
 }
 
+// Confirms `bin` actually exposes a Skill tool before burning a whole eval
+// run on it. Older Claude Code builds (pre-Skills) have no Skill tool at
+// all, so every trial would silently look like a "miss" -- not because the
+// model declined to use the skill, but because it was never an option.
+function preflightSkillSupport({ bin, model }) {
+  return new Promise((resolve) => {
+    const child = spawn(
+      bin,
+      [
+        "-p",
+        "Reply with the word ok. Do not use any tools.",
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--model",
+        model,
+        "--disallowedTools",
+        DISALLOWED_TOOLS,
+      ],
+      { cwd: REPO_ROOT, stdio: ["ignore", "pipe", "pipe"] }
+    );
+
+    let settled = false;
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(hardTimeout);
+      try {
+        child.kill("SIGTERM");
+        setTimeout(() => {
+          try {
+            child.kill("SIGKILL");
+          } catch {}
+        }, 2000);
+      } catch {}
+      resolve(result);
+    };
+    const hardTimeout = setTimeout(() => finish({ ok: false, reason: "timed out waiting for session init" }), 20_000);
+
+    const rl = createInterface({ input: child.stdout });
+    rl.on("line", (line) => {
+      if (settled || !line.trim()) return;
+      let obj;
+      try {
+        obj = JSON.parse(line);
+      } catch {
+        return;
+      }
+      if (obj.type === "system" && obj.subtype === "init") {
+        const tools = obj.tools ?? [];
+        finish({ ok: tools.includes("Skill"), tools });
+      }
+    });
+    child.on("close", (code) => finish({ ok: false, reason: `process exited (code ${code}) before reporting its tool list` }));
+    child.on("error", (err) => finish({ ok: false, reason: String(err) }));
+  });
+}
+
 async function pool(tasks, concurrency, worker) {
   const results = new Array(tasks.length);
   let next = 0;
@@ -185,6 +243,22 @@ async function main() {
     console.error("No matching cases.");
     process.exit(1);
   }
+
+  console.error(`Checking that "${opts.bin}" exposes a Skill tool...`);
+  const preflight = await preflightSkillSupport({ bin: opts.bin, model: opts.model });
+  if (!preflight.ok) {
+    console.error(
+      `\nERROR: "${opts.bin}" does not expose a Skill tool` +
+        (preflight.tools ? ` (tools seen: ${preflight.tools.join(", ")})` : preflight.reason ? ` (${preflight.reason})` : "") +
+        `.\n\nThis eval requires a Claude Code build with Skills support (2.x+). The "claude"` +
+        `\non PATH may be an older build without it. Point this at a newer binary via` +
+        `\n--bin <path> or the CLAUDE_CODE_EXECPATH env var, e.g. the one bundled with the` +
+        `\nVS Code extension:` +
+        `\n  ~/.vscode/extensions/anthropic.claude-code-*/resources/native-binary/claude\n`
+    );
+    process.exit(1);
+  }
+  console.error("OK -- Skill tool available.\n");
 
   const tasks = [];
   for (const c of cases) {
