@@ -1,0 +1,104 @@
+{
+  "positive": [
+    {
+      "id": "p01",
+      "note": "explicit TerriData excel, matches skill description almost verbatim",
+      "prompt": "Add a new indicator for teenage pregnancy rate in Suaza. It's a single value per year, no breakdown by category, and the source is a TerriData Excel export we need to download."
+    },
+    {
+      "id": "p02",
+      "note": "spanish phrasing, zip+excel, no desagregacion",
+      "prompt": "Necesito procesar un nuevo indicador de cobertura de vacunacion infantil para Suaza. Viene en un zip con un excel de TerriData, un solo dato por anio, sin desagregar."
+    },
+    {
+      "id": "p03",
+      "note": "terse, references 'wire it up like the others'",
+      "prompt": "There's a new TerriData export with the adult literacy rate for Suaza -- can you wire it up like the other indicators in this repo?"
+    },
+    {
+      "id": "p04",
+      "note": "explicitly rules out stratifier and map",
+      "prompt": "Add an indicator for rural electricity coverage. One value per year, no stratifiers, no map output. Data needs to be downloaded and unzipped from DNP's site."
+    },
+    {
+      "id": "p05",
+      "note": "casual phrasing, 'process this new dataset' trigger example from description",
+      "prompt": "Can you process this new dataset: internet access rate by year for Suaza? No need to split by any category, just the yearly total."
+    },
+    {
+      "id": "p06",
+      "note": "spanish, casual question form",
+      "prompt": "Puedes agregar el indicador de desercion escolar? Es un solo valor anual, sin desagregacion, hay que descargar un excel del DNP y descomprimirlo."
+    },
+    {
+      "id": "p07",
+      "note": "references health_insurance.R by name as the pattern to follow",
+      "prompt": "I need to add a new DSS indicator like health_insurance.R but for access to clean water -- single yearly value, download + unzip an xlsx from a government site."
+    },
+    {
+      "id": "p08",
+      "note": "no explicit 'no stratifier' language, just implies it via 'straightforward'",
+      "prompt": "Set up processing for the new multidimensional poverty index dataset for Suaza. It's a straightforward one-value-per-year deal, downloaded from TerriData."
+    },
+    {
+      "id": "p09",
+      "note": "references education.R by name",
+      "prompt": "Add the child mortality rate indicator for Suaza, same pattern as the education one -- no stratifier needed."
+    },
+    {
+      "id": "p10",
+      "note": "uses 'observatory file' trigger phrase from skill description",
+      "prompt": "There's a new observatory file for Suaza with the housing deficit indicator, please wire it into the pipeline the way we usually do."
+    }
+  ],
+  "negative": [
+    {
+      "id": "n01",
+      "subcategory": "stratifier",
+      "note": "should follow suicide_mortality.R pattern instead, per skill's own 'When NOT to use'",
+      "prompt": "Add an indicator for mortality by cause, stratified by sex and age group -- keep each category as its own row like the suicide mortality script does."
+    },
+    {
+      "id": "n02",
+      "subcategory": "stratifier",
+      "note": "stratified by regime, should not use this skill",
+      "prompt": "Process the new employment dataset broken down by formal vs informal regime for Suaza."
+    },
+    {
+      "id": "n03",
+      "subcategory": "map",
+      "note": "choropleth/geojson output, should follow huila_map.R instead",
+      "prompt": "I need to add the new municipal poverty rate as a choropleth map layer with geojson output."
+    },
+    {
+      "id": "n04",
+      "subcategory": "map",
+      "note": "map output, references huila_map.R by name",
+      "prompt": "Add the population density indicator as a map for Huila, similar to huila_map.R."
+    },
+    {
+      "id": "n05",
+      "subcategory": "socrata",
+      "note": "paginated API source, skill explicitly says use education.R's helper instead",
+      "prompt": "Add a new indicator sourced from a paginated Socrata API -- it's the health facilities registry."
+    },
+    {
+      "id": "n06",
+      "subcategory": "unrelated_maintenance",
+      "note": "bugfix on existing map script, not a new indicator",
+      "prompt": "Can you fix the bug in huila_map.R where colors aren't rendering correctly on the choropleth?"
+    },
+    {
+      "id": "n07",
+      "subcategory": "unrelated_repo_task",
+      "note": "tooling change, nothing to do with indicators",
+      "prompt": "Refactor the package.json scripts to use pnpm instead of npm run everywhere."
+    },
+    {
+      "id": "n08",
+      "subcategory": "unrelated_question",
+      "note": "pure question, no task to perform",
+      "prompt": "What does the suicide_mortality.R script do? Can you walk me through it?"
+    }
+  ]
+}
