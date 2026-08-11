@@ -12,7 +12,7 @@
 # Totales: zona = "Total"
 #
 # Archivo:
-#   outputs/parquet/program_cover.parquet
+#   outputs/parquet/apoyo-embarazadas.parquet
 # =========================================================
 
 library(here)
@@ -33,10 +33,10 @@ set.seed(5050)
 # ---------------------------
 # 1. Leer base territorial
 # ---------------------------
-sim_csv_file <- file.path(output_dir, "csv", "SMV_map.csv")
+sim_csv_file <- file.path(output_dir, "csv", "SMV-map.csv")
 
 if (!file.exists(sim_csv_file)) {
-  stop("No existe 'SMV_map.csv'. Primero ejecuta SMV_map.R.")
+  stop("No existe 'SMV-map.csv'. Primero ejecuta SMV_map.R.")
 }
 
 smv_base <- read_csv(sim_csv_file, show_col_types = FALSE) %>%
@@ -44,15 +44,15 @@ smv_base <- read_csv(sim_csv_file, show_col_types = FALSE) %>%
   mutate(
     zona_base = case_when(
       zona_base == "Urbano central" ~ "urbano",
-      zona_base == "Periurbano"     ~ "periurbano",
-      zona_base == "Rural"          ~ "rural",
+      zona_base == "Periurbano" ~ "periurbano",
+      zona_base == "Rural" ~ "rural",
       TRUE ~ tolower(zona_base)
     )
   ) %>%
   filter(!Territorio %in% c("Colombia", "Baraya", "San Agustín"))
 
 if (!all(c("Territorio", "zona_base") %in% names(smv_base))) {
-  stop("SMV_map.csv debe contener las columnas 'Territorio' y 'tipo_zona'.")
+  stop("SMV-map.csv debe contener las columnas 'Territorio' y 'tipo_zona'.")
 }
 
 # ---------------------------
@@ -80,9 +80,9 @@ base <- expand_grid(
 peso_barrio <- smv_base %>%
   mutate(
     peso_zona = case_when(
-      zona_base == "urbano"     ~ 1.80,
+      zona_base == "urbano" ~ 1.80,
       zona_base == "periurbano" ~ 1.20,
-      zona_base == "rural"      ~ 0.55,
+      zona_base == "rural" ~ 0.55,
       TRUE ~ 1
     ),
     peso_barrio = runif(n(), 0.75, 1.25) * peso_zona
@@ -125,9 +125,9 @@ variabilidad_barrio_anual <- expand_grid(
       n(),
       mean = 0,
       sd = case_when(
-        zona_base == "urbano"     ~ 0.04,
+        zona_base == "urbano" ~ 0.04,
         zona_base == "periurbano" ~ 0.09,
-        zona_base == "rural"      ~ 0.11,
+        zona_base == "rural" ~ 0.11,
         TRUE ~ 0.06
       )
     ),
@@ -143,10 +143,10 @@ variabilidad_barrio_anual <- expand_grid(
       n(),
       1,
       prob = case_when(
-        anio <= 2018              ~ 0.00,
-        zona_base == "urbano"     ~ 0.08,
+        anio <= 2018 ~ 0.00,
+        zona_base == "urbano" ~ 0.08,
         zona_base == "periurbano" ~ 0.18,
-        zona_base == "rural"      ~ 0.16,
+        zona_base == "rural" ~ 0.16,
         TRUE ~ 0.10
       )
     ),
@@ -162,58 +162,49 @@ base <- base %>%
   left_join(variabilidad_barrio_anual, by = c("anio", "Territorio")) %>%
   mutate(
     valor_individual = case_when(
-
       anio <= 2018 ~ NA_real_,
-
       anio == 2019 ~ case_when(
-        zona_base == "urbano"     ~ 0.30,
+        zona_base == "urbano" ~ 0.30,
         zona_base == "periurbano" ~ 0.18,
-        zona_base == "rural"      ~ 0.10,
+        zona_base == "rural" ~ 0.10,
         TRUE ~ 0.15
       ),
-
       anio == 2020 ~ case_when(
-        zona_base == "urbano"     ~ 0.24,
+        zona_base == "urbano" ~ 0.24,
         zona_base == "periurbano" ~ 0.14,
-        zona_base == "rural"      ~ 0.08,
+        zona_base == "rural" ~ 0.08,
         TRUE ~ 0.12
       ),
-
       anio == 2021 ~ case_when(
-        zona_base == "urbano"     ~ 0.26,
+        zona_base == "urbano" ~ 0.26,
         zona_base == "periurbano" ~ 0.16,
-        zona_base == "rural"      ~ 0.10,
+        zona_base == "rural" ~ 0.10,
         TRUE ~ 0.14
       ),
-
       anio == 2022 ~ case_when(
-        zona_base == "urbano"     ~ 0.34,
+        zona_base == "urbano" ~ 0.34,
         zona_base == "periurbano" ~ 0.24,
-        zona_base == "rural"      ~ 0.16,
+        zona_base == "rural" ~ 0.16,
         TRUE ~ 0.20
       ),
-
       anio >= 2023 ~ case_when(
         Territorio %in% barrios_criticos & zona_base == "periurbano" ~ 0.52,
-        Territorio %in% barrios_criticos & zona_base == "rural"      ~ 0.46,
-        zona_base == "urbano"     ~ 0.40,
+        Territorio %in% barrios_criticos & zona_base == "rural" ~ 0.46,
+        zona_base == "urbano" ~ 0.40,
         zona_base == "periurbano" ~ 0.30,
-        zona_base == "rural"      ~ 0.22,
+        zona_base == "rural" ~ 0.22,
         TRUE ~ 0.28
       )
     ),
-
     valor_individual =
       valor_individual +
-      ruido_persistente +
-      efecto_impulso,
-
+        ruido_persistente +
+        efecto_impulso,
     valor_individual = ifelse(
       is.na(valor_individual),
       NA_real_,
       pmin(pmax(valor_individual, 0.01), 0.90)
     ),
-
     embarazadas_programa = ifelse(
       is.na(valor_individual),
       NA,
@@ -274,11 +265,11 @@ program_cover_final <- bind_rows(
 # ---------------------------
 # 8. Guardar
 # ---------------------------
-csv_dir     <- file.path(output_dir, "csv")
+csv_dir <- file.path(output_dir, "csv")
 parquet_dir <- file.path(output_dir, "parquet")
 
-if (!dir.exists(csv_dir))     dir.create(csv_dir,     recursive = TRUE)
+if (!dir.exists(csv_dir)) dir.create(csv_dir, recursive = TRUE)
 if (!dir.exists(parquet_dir)) dir.create(parquet_dir, recursive = TRUE)
 
-write_csv(program_cover_final,     file.path(csv_dir,     "program_cover.csv"))
-write_parquet(program_cover_final, file.path(parquet_dir, "program_cover.parquet"))
+write_csv(program_cover_final, file.path(csv_dir, "apoyo-embarazadas.csv"))
+write_parquet(program_cover_final, file.path(parquet_dir, "apoyo-embarazadas.parquet"))
