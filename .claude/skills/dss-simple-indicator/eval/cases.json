@@ -2,53 +2,93 @@
   "positive": [
     {
       "id": "p01",
+      "tier": "standard",
       "note": "explicit TerriData excel, matches skill description almost verbatim",
-      "prompt": "Add a new indicator for teenage pregnancy rate in Suaza. It's a single value per year, no breakdown by category, and the source is a TerriData Excel export we need to download."
+      "prompt": "Necesito agregar un nuevo indicador de embarazo adolescente para Suaza. Es un solo valor por año, sin desagregar por categoría, y la fuente es un archivo Excel de TerriData que hay que descargar."
     },
     {
       "id": "p02",
-      "note": "spanish phrasing, zip+excel, no desagregacion",
-      "prompt": "Necesito procesar un nuevo indicador de cobertura de vacunacion infantil para Suaza. Viene en un zip con un excel de TerriData, un solo dato por anio, sin desagregar."
+      "tier": "standard",
+      "note": "zip+excel, no desagregacion",
+      "prompt": "Necesito procesar un nuevo indicador de cobertura de vacunación infantil para Suaza. Viene en un zip con un excel de TerriData, un solo dato por año, sin desagregar."
     },
     {
       "id": "p03",
+      "tier": "standard",
       "note": "terse, references 'wire it up like the others'",
-      "prompt": "There's a new TerriData export with the adult literacy rate for Suaza -- can you wire it up like the other indicators in this repo?"
+      "prompt": "Hay un nuevo archivo de TerriData con la tasa de alfabetización de adultos para Suaza. ¿Puedes integrarlo igual que los demás indicadores de este repositorio?"
     },
     {
       "id": "p04",
+      "tier": "standard",
       "note": "explicitly rules out stratifier and map",
-      "prompt": "Add an indicator for rural electricity coverage. One value per year, no stratifiers, no map output. Data needs to be downloaded and unzipped from DNP's site."
+      "prompt": "Agrega un indicador de cobertura eléctrica rural. Un valor por año, sin estratificadores, sin salida de mapa. Los datos hay que descargarlos y descomprimirlos del sitio del DNP."
     },
     {
       "id": "p05",
+      "tier": "standard",
       "note": "casual phrasing, 'process this new dataset' trigger example from description",
-      "prompt": "Can you process this new dataset: internet access rate by year for Suaza? No need to split by any category, just the yearly total."
+      "prompt": "¿Puedes procesar este nuevo conjunto de datos: la tasa de acceso a internet por año para Suaza? No hace falta desagregar por categoría, solo el total anual."
     },
     {
       "id": "p06",
-      "note": "spanish, casual question form",
-      "prompt": "Puedes agregar el indicador de desercion escolar? Es un solo valor anual, sin desagregacion, hay que descargar un excel del DNP y descomprimirlo."
+      "tier": "standard",
+      "note": "casual question form",
+      "prompt": "¿Puedes agregar el indicador de deserción escolar? Es un solo valor anual, sin desagregación, hay que descargar un excel del DNP y descomprimirlo."
     },
     {
       "id": "p07",
+      "tier": "standard",
       "note": "references health_insurance.R by name as the pattern to follow",
-      "prompt": "I need to add a new DSS indicator like health_insurance.R but for access to clean water -- single yearly value, download + unzip an xlsx from a government site."
+      "prompt": "Necesito agregar un nuevo indicador DSS parecido a health_insurance.R pero para acceso a agua potable: un solo valor anual, hay que descargar y descomprimir un xlsx de un sitio del gobierno."
     },
     {
       "id": "p08",
-      "note": "no explicit 'no stratifier' language, just implies it via 'straightforward'",
-      "prompt": "Set up processing for the new multidimensional poverty index dataset for Suaza. It's a straightforward one-value-per-year deal, downloaded from TerriData."
+      "tier": "standard",
+      "note": "no explicit 'no stratifier' language, just implies it via 'sencillo'",
+      "prompt": "Configura el procesamiento del nuevo conjunto de datos del índice de pobreza multidimensional para Suaza. Es sencillo, un solo valor por año, descargado de TerriData."
     },
     {
       "id": "p09",
+      "tier": "standard",
       "note": "references education.R by name",
-      "prompt": "Add the child mortality rate indicator for Suaza, same pattern as the education one -- no stratifier needed."
+      "prompt": "Agrega el indicador de tasa de mortalidad infantil para Suaza, con el mismo patrón que el de educación. No necesita estratificador."
     },
     {
       "id": "p10",
+      "tier": "standard",
       "note": "uses 'observatory file' trigger phrase from skill description",
-      "prompt": "There's a new observatory file for Suaza with the housing deficit indicator, please wire it into the pipeline the way we usually do."
+      "prompt": "Hay un nuevo archivo del observatorio para Suaza con el indicador de déficit habitacional. Intégralo al pipeline como lo hacemos siempre."
+    },
+    {
+      "id": "h01",
+      "tier": "hard",
+      "note": "minimal signal: no source, no year, no stratifier mention at all -- just indicator + entity",
+      "prompt": "Agrega el indicador de cobertura de agua potable para Suaza."
+    },
+    {
+      "id": "h02",
+      "tier": "hard",
+      "note": "colloquial 'toca bajar' instead of 'descargar', doesn't spell out excel/zip or 'sin estratificador'",
+      "prompt": "Necesitamos el dato de desempleo juvenil, un archivo del DANE que toca bajar."
+    },
+    {
+      "id": "h03",
+      "tier": "hard",
+      "note": "self-correction typo mid-sentence, terse ask",
+      "prompt": "¿Me ayudas con el indicador de mortalidad materna... perdón, materna? Ya tengo el link del archivo, solo falta procesarlo."
+    },
+    {
+      "id": "h04",
+      "tier": "hard",
+      "note": "'régimen contributivo' names the indicator itself, not a stratifier -- tests false-negative risk from stratifier-adjacent vocabulary",
+      "prompt": "Falta agregar el número de afiliados al régimen contributivo por año, viene de un excel que hay que sacar de un zip."
+    },
+    {
+      "id": "h05",
+      "tier": "hard",
+      "note": "very terse slack-style message, minimal detail",
+      "prompt": "Toca meter un nuevo indicador de analfabetismo, del DNP, nada muy complicado."
     }
   ],
   "negative": [
@@ -56,49 +96,61 @@
       "id": "n01",
       "subcategory": "stratifier",
       "note": "should follow suicide_mortality.R pattern instead, per skill's own 'When NOT to use'",
-      "prompt": "Add an indicator for mortality by cause, stratified by sex and age group -- keep each category as its own row like the suicide mortality script does."
+      "prompt": "Agrega un indicador de mortalidad por causa, estratificado por sexo y grupo de edad. Deja cada categoría en su propia fila, igual que el script de mortalidad por suicidio."
     },
     {
       "id": "n02",
       "subcategory": "stratifier",
       "note": "stratified by regime, should not use this skill",
-      "prompt": "Process the new employment dataset broken down by formal vs informal regime for Suaza."
+      "prompt": "Procesa el nuevo conjunto de datos de empleo desagregado por régimen formal e informal para Suaza."
     },
     {
       "id": "n03",
       "subcategory": "map",
       "note": "choropleth/geojson output, should follow huila_map.R instead",
-      "prompt": "I need to add the new municipal poverty rate as a choropleth map layer with geojson output."
+      "prompt": "Necesito agregar la nueva tasa de pobreza municipal como una capa de mapa coroplético con salida geojson."
     },
     {
       "id": "n04",
       "subcategory": "map",
       "note": "map output, references huila_map.R by name",
-      "prompt": "Add the population density indicator as a map for Huila, similar to huila_map.R."
+      "prompt": "Agrega el indicador de densidad poblacional como un mapa para el Huila, similar a huila_map.R."
     },
     {
       "id": "n05",
       "subcategory": "socrata",
       "note": "paginated API source, skill explicitly says use education.R's helper instead",
-      "prompt": "Add a new indicator sourced from a paginated Socrata API -- it's the health facilities registry."
+      "prompt": "Agrega un nuevo indicador que viene de una API de Socrata paginada: es el registro de instituciones de salud."
     },
     {
       "id": "n06",
       "subcategory": "unrelated_maintenance",
       "note": "bugfix on existing map script, not a new indicator",
-      "prompt": "Can you fix the bug in huila_map.R where colors aren't rendering correctly on the choropleth?"
+      "prompt": "¿Puedes arreglar el error en huila_map.R donde los colores no se están mostrando bien en el mapa coroplético?"
     },
     {
       "id": "n07",
       "subcategory": "unrelated_repo_task",
       "note": "tooling change, nothing to do with indicators",
-      "prompt": "Refactor the package.json scripts to use pnpm instead of npm run everywhere."
+      "prompt": "Refactoriza los scripts de package.json para usar pnpm en vez de npm run en todas partes."
     },
     {
       "id": "n08",
       "subcategory": "unrelated_question",
       "note": "pure question, no task to perform",
-      "prompt": "What does the suicide_mortality.R script do? Can you walk me through it?"
+      "prompt": "¿Qué hace el script suicide_mortality.R? ¿Me puedes explicar cómo funciona?"
+    },
+    {
+      "id": "h06",
+      "subcategory": "oblique_stratifier",
+      "note": "stratifier request phrased as an addendum, not with the word 'stratified' -- tests false-positive risk from soft phrasing",
+      "prompt": "Agrega el indicador de embarazo adolescente, pero necesito verlo separado por grupo de edad."
+    },
+    {
+      "id": "h07",
+      "subcategory": "bundled_map",
+      "note": "bundles a simple-indicator ask with a map ask in the same message",
+      "prompt": "Agrega el indicador de pobreza y de una vez me armas el mapa con eso."
     }
   ]
 }

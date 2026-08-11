@@ -217,6 +217,24 @@ function preflightSkillSupport({ bin, model }) {
   });
 }
 
+// 95% Wilson score interval. A bare "50/50 = 100%" reads as certainty; the
+// interval makes clear how much a small sample can and can't tell you (e.g.
+// 50/50 successes only bounds the true rate above ~93%, not "always").
+function wilsonInterval(successes, n, z = 1.96) {
+  if (n === 0) return [0, 1];
+  const p = successes / n;
+  const denom = 1 + (z * z) / n;
+  const center = p + (z * z) / (2 * n);
+  const margin = z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n));
+  return [Math.max(0, (center - margin) / denom), Math.min(1, (center + margin) / denom)];
+}
+
+function fmtRate(successes, n) {
+  const [lo, hi] = wilsonInterval(successes, n);
+  const rate = n ? ((successes / n) * 100).toFixed(0) : "0";
+  return `${successes}/${n} (${rate}%, 95% CI ${(lo * 100).toFixed(0)}-${(hi * 100).toFixed(0)}%)`;
+}
+
 async function pool(tasks, concurrency, worker) {
   const results = new Array(tasks.length);
   let next = 0;
@@ -294,35 +312,27 @@ async function main() {
   }
 
   console.log("\n=== Per-case results ===");
-  console.log(
-    "id".padEnd(5) + "category".padEnd(11) + "trigger_rate".padEnd(14) + "note"
-  );
+  console.log("id".padEnd(5) + "cat".padEnd(10) + "tier".padEnd(10) + "trigger_rate".padEnd(30) + "note");
   for (const [id, rs] of perCase) {
-    const rate = rs.filter((r) => r.triggered).length / rs.length;
     const c = byId.get(id);
+    const trig = rs.filter((r) => r.triggered).length;
     console.log(
-      id.padEnd(5) +
-        c.category.padEnd(11) +
-        `${rs.filter((r) => r.triggered).length}/${rs.length} (${(rate * 100).toFixed(0)}%)`.padEnd(14) +
-        (c.note ?? "")
+      id.padEnd(5) + c.category.padEnd(10) + (c.tier ?? c.subcategory ?? "-").padEnd(10) + fmtRate(trig, rs.length).padEnd(30) + (c.note ?? "")
     );
   }
 
-  const positiveResults = merged.filter((r) => r.category === "positive");
-  const negativeResults = merged.filter((r) => r.category === "negative");
-  const positiveRate = positiveResults.filter((r) => r.triggered).length / (positiveResults.length || 1);
-  const negativeFalseTriggerRate =
-    negativeResults.filter((r) => r.triggered).length / (negativeResults.length || 1);
+  const bucket = (pred) => merged.filter(pred);
+  const rateLine = (label, rs) => {
+    const trig = rs.filter((r) => r.triggered).length;
+    console.log(`${label.padEnd(48)}${fmtRate(trig, rs.length)}`);
+  };
 
-  console.log("\n=== Summary ===");
-  console.log(
-    `Positive trigger rate (should call skill):     ${(positiveRate * 100).toFixed(1)}% ` +
-      `(${positiveResults.filter((r) => r.triggered).length}/${positiveResults.length})`
-  );
-  console.log(
-    `Negative false-trigger rate (should NOT call):  ${(negativeFalseTriggerRate * 100).toFixed(1)}% ` +
-      `(${negativeResults.filter((r) => r.triggered).length}/${negativeResults.length})`
-  );
+  console.log("\n=== Summary (95% Wilson CI -- a bare % overstates certainty at this sample size) ===");
+  rateLine("Positive trigger rate, all:", bucket((r) => r.category === "positive"));
+  rateLine("  standard tier:", bucket((r) => r.category === "positive" && byId.get(r.caseId).tier === "standard"));
+  rateLine("  hard tier (vague/terse/typo):", bucket((r) => r.category === "positive" && byId.get(r.caseId).tier === "hard"));
+  rateLine("Negative false-trigger rate, all:", bucket((r) => r.category === "negative"));
+
   console.log(`\nRaw trial log: ${path.relative(REPO_ROOT, rawPath)}`);
 }
 
