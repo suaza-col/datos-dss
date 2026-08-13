@@ -62,7 +62,7 @@ Reference fork by a real municipality:
 
 ## 2. Repository structure
 
-```
+```{}
 R/                       Package functions (roxygen2-documented)
   process_indicator.R      Core: reads config, runs script, saves outputs
   utils_normalization.R    Text/column normalization
@@ -242,6 +242,7 @@ This repo is synced from a private monorepo; merged PRs flow back upstream.
 See `CONTRIBUTING.md`.
 
 When helping a user contribute:
+
 - Work on a branch in **their fork**, never directly on `main`.
 - One indicator or one concern per PR.
 - PR description in English: what indicator, what source (with URL), what
