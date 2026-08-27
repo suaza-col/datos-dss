@@ -25,51 +25,58 @@
 // one bundled with the VS Code extension:
 //   ~/.vscode/extensions/anthropic.claude-code-*/resources/native-binary/claude
 
-import { spawn } from "node:child_process";
-import { createInterface } from "node:readline";
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
+import { spawn } from 'node:child_process'
+import { createInterface } from 'node:readline'
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
-const SKILL_NAME = "dss-simple-indicator";
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..')
+const SKILL_NAME = 'dss-simple-indicator'
 
 const DISALLOWED_TOOLS =
-  "Bash,Write,Edit,MultiEdit,NotebookEdit,WebFetch,WebSearch";
-const PER_TRIAL_TIMEOUT_MS = 75_000;
+  'Bash,Write,Edit,MultiEdit,NotebookEdit,WebFetch,WebSearch'
+const PER_TRIAL_TIMEOUT_MS = 75_000
 
 function parseArgs(argv) {
   const opts = {
     trialsPositive: 5,
     trialsNegative: 3,
     concurrency: 6,
-    model: "claude-sonnet-5",
-    bin: process.env.CLAUDE_CODE_EXECPATH || "claude",
+    model: 'claude-sonnet-5',
+    bin: process.env.CLAUDE_CODE_EXECPATH || 'claude',
     caseIds: null,
-  };
+  }
   for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a === "--trials-positive") opts.trialsPositive = Number(argv[++i]);
-    else if (a === "--trials-negative") opts.trialsNegative = Number(argv[++i]);
-    else if (a === "--concurrency") opts.concurrency = Number(argv[++i]);
-    else if (a === "--model") opts.model = argv[++i];
-    else if (a === "--bin") opts.bin = argv[++i];
-    else if (a === "--case") (opts.caseIds ??= []).push(argv[++i]);
-    else if (a === "--help" || a === "-h") {
-      console.log(readFileSync(new URL(import.meta.url), "utf8").split("\n").slice(1, 26).join("\n"));
-      process.exit(0);
+    const a = argv[i]
+    if (a === '--trials-positive') opts.trialsPositive = Number(argv[++i])
+    else if (a === '--trials-negative') opts.trialsNegative = Number(argv[++i])
+    else if (a === '--concurrency') opts.concurrency = Number(argv[++i])
+    else if (a === '--model') opts.model = argv[++i]
+    else if (a === '--bin') opts.bin = argv[++i]
+    else if (a === '--case') (opts.caseIds ??= []).push(argv[++i])
+    else if (a === '--help' || a === '-h') {
+      console.log(
+        readFileSync(new URL(import.meta.url), 'utf8')
+          .split('\n')
+          .slice(1, 26)
+          .join('\n'),
+      )
+      process.exit(0)
     }
   }
-  return opts;
+  return opts
 }
 
 function loadCases() {
-  const raw = JSON.parse(readFileSync(path.join(__dirname, "cases.json"), "utf8"));
-  const cases = [];
-  for (const c of raw.positive) cases.push({ ...c, category: "positive" });
-  for (const c of raw.negative) cases.push({ ...c, category: "negative" });
-  return cases;
+  const raw = JSON.parse(
+    readFileSync(path.join(__dirname, 'cases.json'), 'utf8'),
+  )
+  const cases = []
+  for (const c of raw.positive) cases.push({ ...c, category: 'positive' })
+  for (const c of raw.negative) cases.push({ ...c, category: 'negative' })
+  return cases
 }
 
 // Runs one headless session, resolves as soon as the FIRST tool_use block
@@ -78,35 +85,38 @@ function loadCases() {
 function runTrial({ bin, model, prompt, caseId, trial }) {
   return new Promise((resolve) => {
     const args = [
-      "-p",
+      '-p',
       prompt,
-      "--output-format",
-      "stream-json",
-      "--verbose",
-      "--model",
+      '--output-format',
+      'stream-json',
+      '--verbose',
+      '--model',
       model,
-      "--disallowedTools",
+      '--disallowedTools',
       DISALLOWED_TOOLS,
-    ];
-    const start = Date.now();
-    const child = spawn(bin, args, { cwd: REPO_ROOT, stdio: ["ignore", "pipe", "pipe"] });
+    ]
+    const start = Date.now()
+    const child = spawn(bin, args, {
+      cwd: REPO_ROOT,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
 
-    let settled = false;
-    let sawResultWithNoTool = false;
-    let resultText = null;
+    let settled = false
+    let sawResultWithNoTool = false
+    let resultText = null
 
     const finish = (partial) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(hardTimeout);
-      const elapsedMs = Date.now() - start;
+      if (settled) return
+      settled = true
+      clearTimeout(hardTimeout)
+      const elapsedMs = Date.now() - start
       try {
-        child.kill("SIGTERM");
+        child.kill('SIGTERM')
         setTimeout(() => {
           try {
-            child.kill("SIGKILL");
+            child.kill('SIGKILL')
           } catch {}
-        }, 3000);
+        }, 3000)
       } catch {}
       resolve({
         caseId,
@@ -115,48 +125,54 @@ function runTrial({ bin, model, prompt, caseId, trial }) {
         tool: null,
         toolInput: null,
         triggered: false,
-        status: "no_tool_use",
+        status: 'no_tool_use',
         resultText,
         ...partial,
-      });
-    };
+      })
+    }
 
-    const hardTimeout = setTimeout(() => finish({ status: "timeout" }), PER_TRIAL_TIMEOUT_MS);
+    const hardTimeout = setTimeout(
+      () => finish({ status: 'timeout' }),
+      PER_TRIAL_TIMEOUT_MS,
+    )
 
-    const rl = createInterface({ input: child.stdout });
-    rl.on("line", (line) => {
-      if (settled || !line.trim()) return;
-      let obj;
+    const rl = createInterface({ input: child.stdout })
+    rl.on('line', (line) => {
+      if (settled || !line.trim()) return
+      let obj
       try {
-        obj = JSON.parse(line);
+        obj = JSON.parse(line)
       } catch {
-        return;
+        return
       }
-      if (obj.type === "assistant") {
-        const blocks = obj.message?.content ?? [];
-        const toolUse = blocks.find((b) => b.type === "tool_use");
+      if (obj.type === 'assistant') {
+        const blocks = obj.message?.content ?? []
+        const toolUse = blocks.find((b) => b.type === 'tool_use')
         if (toolUse) {
-          const triggered = toolUse.name === "Skill" && toolUse.input?.skill === SKILL_NAME;
+          const triggered =
+            toolUse.name === 'Skill' && toolUse.input?.skill === SKILL_NAME
           finish({
             tool: toolUse.name,
             toolInput: toolUse.input,
             triggered,
-            status: "tool_use",
-          });
+            status: 'tool_use',
+          })
         }
-      } else if (obj.type === "result") {
-        sawResultWithNoTool = true;
-        resultText = typeof obj.result === "string" ? obj.result.slice(0, 300) : null;
+      } else if (obj.type === 'result') {
+        sawResultWithNoTool = true
+        resultText =
+          typeof obj.result === 'string' ? obj.result.slice(0, 300) : null
       }
-    });
+    })
 
-    child.on("close", () => {
-      if (!settled) finish({ status: sawResultWithNoTool ? "text_only" : "closed_early" });
-    });
-    child.on("error", (err) => {
-      finish({ status: "spawn_error", resultText: String(err) });
-    });
-  });
+    child.on('close', () => {
+      if (!settled)
+        finish({ status: sawResultWithNoTool ? 'text_only' : 'closed_early' })
+    })
+    child.on('error', (err) => {
+      finish({ status: 'spawn_error', resultText: String(err) })
+    })
+  })
 }
 
 // Confirms `bin` actually exposes a Skill tool before burning a whole eval
@@ -168,172 +184,233 @@ function preflightSkillSupport({ bin, model }) {
     const child = spawn(
       bin,
       [
-        "-p",
-        "Reply with the word ok. Do not use any tools.",
-        "--output-format",
-        "stream-json",
-        "--verbose",
-        "--model",
+        '-p',
+        'Reply with the word ok. Do not use any tools.',
+        '--output-format',
+        'stream-json',
+        '--verbose',
+        '--model',
         model,
-        "--disallowedTools",
+        '--disallowedTools',
         DISALLOWED_TOOLS,
       ],
-      { cwd: REPO_ROOT, stdio: ["ignore", "pipe", "pipe"] }
-    );
+      { cwd: REPO_ROOT, stdio: ['ignore', 'pipe', 'pipe'] },
+    )
 
-    let settled = false;
+    let settled = false
     const finish = (result) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(hardTimeout);
+      if (settled) return
+      settled = true
+      clearTimeout(hardTimeout)
       try {
-        child.kill("SIGTERM");
+        child.kill('SIGTERM')
         setTimeout(() => {
           try {
-            child.kill("SIGKILL");
+            child.kill('SIGKILL')
           } catch {}
-        }, 2000);
+        }, 2000)
       } catch {}
-      resolve(result);
-    };
-    const hardTimeout = setTimeout(() => finish({ ok: false, reason: "timed out waiting for session init" }), 20_000);
+      resolve(result)
+    }
+    const hardTimeout = setTimeout(
+      () => finish({ ok: false, reason: 'timed out waiting for session init' }),
+      20_000,
+    )
 
-    const rl = createInterface({ input: child.stdout });
-    rl.on("line", (line) => {
-      if (settled || !line.trim()) return;
-      let obj;
+    const rl = createInterface({ input: child.stdout })
+    rl.on('line', (line) => {
+      if (settled || !line.trim()) return
+      let obj
       try {
-        obj = JSON.parse(line);
+        obj = JSON.parse(line)
       } catch {
-        return;
+        return
       }
-      if (obj.type === "system" && obj.subtype === "init") {
-        const tools = obj.tools ?? [];
-        finish({ ok: tools.includes("Skill"), tools });
+      if (obj.type === 'system' && obj.subtype === 'init') {
+        const tools = obj.tools ?? []
+        finish({ ok: tools.includes('Skill'), tools })
       }
-    });
-    child.on("close", (code) => finish({ ok: false, reason: `process exited (code ${code}) before reporting its tool list` }));
-    child.on("error", (err) => finish({ ok: false, reason: String(err) }));
-  });
+    })
+    child.on('close', (code) =>
+      finish({
+        ok: false,
+        reason: `process exited (code ${code}) before reporting its tool list`,
+      }),
+    )
+    child.on('error', (err) => finish({ ok: false, reason: String(err) }))
+  })
 }
 
 // 95% Wilson score interval. A bare "50/50 = 100%" reads as certainty; the
 // interval makes clear how much a small sample can and can't tell you (e.g.
 // 50/50 successes only bounds the true rate above ~93%, not "always").
 function wilsonInterval(successes, n, z = 1.96) {
-  if (n === 0) return [0, 1];
-  const p = successes / n;
-  const denom = 1 + (z * z) / n;
-  const center = p + (z * z) / (2 * n);
-  const margin = z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n));
-  return [Math.max(0, (center - margin) / denom), Math.min(1, (center + margin) / denom)];
+  if (n === 0) return [0, 1]
+  const p = successes / n
+  const denom = 1 + (z * z) / n
+  const center = p + (z * z) / (2 * n)
+  const margin = z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))
+  return [
+    Math.max(0, (center - margin) / denom),
+    Math.min(1, (center + margin) / denom),
+  ]
 }
 
 function fmtRate(successes, n) {
-  const [lo, hi] = wilsonInterval(successes, n);
-  const rate = n ? ((successes / n) * 100).toFixed(0) : "0";
-  return `${successes}/${n} (${rate}%, 95% CI ${(lo * 100).toFixed(0)}-${(hi * 100).toFixed(0)}%)`;
+  const [lo, hi] = wilsonInterval(successes, n)
+  const rate = n ? ((successes / n) * 100).toFixed(0) : '0'
+  return `${successes}/${n} (${rate}%, 95% CI ${(lo * 100).toFixed(0)}-${(hi * 100).toFixed(0)}%)`
 }
 
 async function pool(tasks, concurrency, worker) {
-  const results = new Array(tasks.length);
-  let next = 0;
+  const results = new Array(tasks.length)
+  let next = 0
   async function runOne() {
     while (next < tasks.length) {
-      const i = next++;
-      results[i] = await worker(tasks[i]);
+      const i = next++
+      results[i] = await worker(tasks[i])
       process.stderr.write(
         `[${i + 1}/${tasks.length}] ${tasks[i].caseId} trial ${tasks[i].trial}: ` +
-          `${results[i].triggered ? "TRIGGERED" : results[i].tool ?? results[i].status}\n`
-      );
+          `${results[i].triggered ? 'TRIGGERED' : (results[i].tool ?? results[i].status)}\n`,
+      )
     }
   }
-  await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, runOne));
-  return results;
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, tasks.length) }, runOne),
+  )
+  return results
 }
 
 async function main() {
-  const opts = parseArgs(process.argv.slice(2));
+  const opts = parseArgs(process.argv.slice(2))
 
-  let cases = loadCases();
-  if (opts.caseIds) cases = cases.filter((c) => opts.caseIds.includes(c.id));
+  let cases = loadCases()
+  if (opts.caseIds) cases = cases.filter((c) => opts.caseIds.includes(c.id))
   if (cases.length === 0) {
-    console.error("No matching cases.");
-    process.exit(1);
+    console.error('No matching cases.')
+    process.exit(1)
   }
 
-  console.error(`Checking that "${opts.bin}" exposes a Skill tool...`);
-  const preflight = await preflightSkillSupport({ bin: opts.bin, model: opts.model });
+  console.error(`Checking that "${opts.bin}" exposes a Skill tool...`)
+  const preflight = await preflightSkillSupport({
+    bin: opts.bin,
+    model: opts.model,
+  })
   if (!preflight.ok) {
     console.error(
       `\nERROR: "${opts.bin}" does not expose a Skill tool` +
-        (preflight.tools ? ` (tools seen: ${preflight.tools.join(", ")})` : preflight.reason ? ` (${preflight.reason})` : "") +
+        (preflight.tools
+          ? ` (tools seen: ${preflight.tools.join(', ')})`
+          : preflight.reason
+            ? ` (${preflight.reason})`
+            : '') +
         `.\n\nThis eval requires a Claude Code build with Skills support (2.x+). The "claude"` +
         `\non PATH may be an older build without it. Point this at a newer binary via` +
         `\n--bin <path> or the CLAUDE_CODE_EXECPATH env var, e.g. the one bundled with the` +
         `\nVS Code extension:` +
-        `\n  ~/.vscode/extensions/anthropic.claude-code-*/resources/native-binary/claude\n`
-    );
-    process.exit(1);
+        `\n  ~/.vscode/extensions/anthropic.claude-code-*/resources/native-binary/claude\n`,
+    )
+    process.exit(1)
   }
-  console.error("OK -- Skill tool available.\n");
+  console.error('OK -- Skill tool available.\n')
 
-  const tasks = [];
+  const tasks = []
   for (const c of cases) {
-    const trials = c.category === "positive" ? opts.trialsPositive : opts.trialsNegative;
+    const trials =
+      c.category === 'positive' ? opts.trialsPositive : opts.trialsNegative
     for (let t = 1; t <= trials; t++) {
-      tasks.push({ caseId: c.id, category: c.category, prompt: c.prompt, trial: t });
+      tasks.push({
+        caseId: c.id,
+        category: c.category,
+        prompt: c.prompt,
+        trial: t,
+      })
     }
   }
 
   console.error(
     `Running ${tasks.length} trials across ${cases.length} cases ` +
-      `(model=${opts.model}, bin=${opts.bin}, concurrency=${opts.concurrency})...\n`
-  );
+      `(model=${opts.model}, bin=${opts.bin}, concurrency=${opts.concurrency})...\n`,
+  )
 
   const results = await pool(tasks, opts.concurrency, (task) =>
-    runTrial({ bin: opts.bin, model: opts.model, prompt: task.prompt, caseId: task.caseId, trial: task.trial })
-  );
+    runTrial({
+      bin: opts.bin,
+      model: opts.model,
+      prompt: task.prompt,
+      caseId: task.caseId,
+      trial: task.trial,
+    }),
+  )
 
-  const byId = new Map(cases.map((c) => [c.id, c]));
-  const merged = results.map((r, i) => ({ ...tasks[i], ...r }));
+  const byId = new Map(cases.map((c) => [c.id, c]))
+  const merged = results.map((r, i) => ({ ...tasks[i], ...r }))
 
-  const outDir = path.join(__dirname, "results");
-  mkdirSync(outDir, { recursive: true });
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const rawPath = path.join(outDir, `${stamp}.jsonl`);
-  writeFileSync(rawPath, merged.map((r) => JSON.stringify(r)).join("\n") + "\n");
+  const outDir = path.join(__dirname, 'results')
+  mkdirSync(outDir, { recursive: true })
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const rawPath = path.join(outDir, `${stamp}.jsonl`)
+  writeFileSync(rawPath, merged.map((r) => JSON.stringify(r)).join('\n') + '\n')
 
   // Per-case summary
-  const perCase = new Map();
+  const perCase = new Map()
   for (const r of merged) {
-    if (!perCase.has(r.caseId)) perCase.set(r.caseId, []);
-    perCase.get(r.caseId).push(r);
+    if (!perCase.has(r.caseId)) perCase.set(r.caseId, [])
+    perCase.get(r.caseId).push(r)
   }
 
-  console.log("\n=== Per-case results ===");
-  console.log("id".padEnd(5) + "cat".padEnd(10) + "tier".padEnd(10) + "trigger_rate".padEnd(30) + "note");
+  console.log('\n=== Per-case results ===')
+  console.log(
+    'id'.padEnd(5) +
+      'cat'.padEnd(10) +
+      'tier'.padEnd(10) +
+      'trigger_rate'.padEnd(30) +
+      'note',
+  )
   for (const [id, rs] of perCase) {
-    const c = byId.get(id);
-    const trig = rs.filter((r) => r.triggered).length;
+    const c = byId.get(id)
+    const trig = rs.filter((r) => r.triggered).length
     console.log(
-      id.padEnd(5) + c.category.padEnd(10) + (c.tier ?? c.subcategory ?? "-").padEnd(10) + fmtRate(trig, rs.length).padEnd(30) + (c.note ?? "")
-    );
+      id.padEnd(5) +
+        c.category.padEnd(10) +
+        (c.tier ?? c.subcategory ?? '-').padEnd(10) +
+        fmtRate(trig, rs.length).padEnd(30) +
+        (c.note ?? ''),
+    )
   }
 
-  const bucket = (pred) => merged.filter(pred);
+  const bucket = (pred) => merged.filter(pred)
   const rateLine = (label, rs) => {
-    const trig = rs.filter((r) => r.triggered).length;
-    console.log(`${label.padEnd(48)}${fmtRate(trig, rs.length)}`);
-  };
+    const trig = rs.filter((r) => r.triggered).length
+    console.log(`${label.padEnd(48)}${fmtRate(trig, rs.length)}`)
+  }
 
-  console.log("\n=== Summary (95% Wilson CI -- a bare % overstates certainty at this sample size) ===");
-  rateLine("Positive trigger rate, all:", bucket((r) => r.category === "positive"));
-  rateLine("  standard tier:", bucket((r) => r.category === "positive" && byId.get(r.caseId).tier === "standard"));
-  rateLine("  hard tier (vague/terse/typo):", bucket((r) => r.category === "positive" && byId.get(r.caseId).tier === "hard"));
-  rateLine("Negative false-trigger rate, all:", bucket((r) => r.category === "negative"));
+  console.log(
+    '\n=== Summary (95% Wilson CI -- a bare % overstates certainty at this sample size) ===',
+  )
+  rateLine(
+    'Positive trigger rate, all:',
+    bucket((r) => r.category === 'positive'),
+  )
+  rateLine(
+    '  standard tier:',
+    bucket(
+      (r) =>
+        r.category === 'positive' && byId.get(r.caseId).tier === 'standard',
+    ),
+  )
+  rateLine(
+    '  hard tier (vague/terse/typo):',
+    bucket(
+      (r) => r.category === 'positive' && byId.get(r.caseId).tier === 'hard',
+    ),
+  )
+  rateLine(
+    'Negative false-trigger rate, all:',
+    bucket((r) => r.category === 'negative'),
+  )
 
-  console.log(`\nRaw trial log: ${path.relative(REPO_ROOT, rawPath)}`);
+  console.log(`\nRaw trial log: ${path.relative(REPO_ROOT, rawPath)}`)
 }
 
-main();
+main()
