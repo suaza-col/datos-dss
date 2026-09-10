@@ -61,8 +61,8 @@ process_health_insurance <- function(output_dir = here("outputs")) {
     dir.create(parquet_dir, recursive = TRUE)
   }
 
-  insurance_csv_file <- file.path(output_dir, "csv", "health_insurance.csv")
-  insurance_parquet_file <- file.path(output_dir, "parquet", "health_insurance.parquet")
+  insurance_csv_file <- file.path(output_dir, "csv", "aseguramiento.csv")
+  insurance_parquet_file <- file.path(output_dir, "parquet", "aseguramiento.parquet")
 
   write_csv(insurance, insurance_csv_file)
   write_parquet(insurance, insurance_parquet_file)

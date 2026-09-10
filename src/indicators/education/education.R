@@ -106,12 +106,14 @@ process_education_suaza <- function(output_dir = here("outputs")) {
     ) |>
     mutate(
       anio             = as.integer(a_o),
-      cobertura_bruta  = as.numeric(cobertura_bruta),
-      cobertura_neta   = as.numeric(cobertura_neta),
-      deserci_n        = as.numeric(deserci_n),
-      aprobaci_n       = as.numeric(aprobaci_n),
-      reprobaci_n      = as.numeric(reprobaci_n),
-      repitencia       = as.numeric(repitencia)
+      # Source (MEN) expresses these indicators as percentages (0-100).
+      # Convert to proportions (0-1) for the dashboard.
+      cobertura_bruta  = as.numeric(cobertura_bruta) / 100,
+      cobertura_neta   = as.numeric(cobertura_neta) / 100,
+      deserci_n        = as.numeric(deserci_n) / 100,
+      aprobaci_n       = as.numeric(aprobaci_n) / 100,
+      reprobaci_n      = as.numeric(reprobaci_n) / 100,
+      repitencia       = as.numeric(repitencia) / 100
     ) |>
     filter(!is.na(anio))
 
@@ -139,12 +141,12 @@ process_education_suaza <- function(output_dir = here("outputs")) {
 
   # One file per indicator, each with just anio + valor
   indicadores <- c(
-    cobertura_bruta = "education_cobertura_bruta",
-    cobertura_neta  = "education_cobertura_neta",
-    deserci_n       = "education_desercion",
-    aprobaci_n      = "education_aprobacion",
-    reprobaci_n     = "education_reprobacion",
-    repitencia      = "education_repitencia"
+    cobertura_bruta = "cobertura-bruta",
+    cobertura_neta  = "cobertura-neta",
+    deserci_n       = "desercion",
+    aprobaci_n      = "aprobacion",
+    reprobaci_n     = "reprobacion",
+    repitencia      = "repitencia"
   )
 
   output_files <- character(0)

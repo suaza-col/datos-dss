@@ -49,27 +49,13 @@ process_suicide <- function(output_dir = here("outputs")) {
       territorio      = Territorio
     ) |>
     select(
-      iso3,
       territorio,
-      cod_subnacional,
       cod_local,
       anio,
       sexo,
-      valor,
-      indicador
+      valor
     ) |>
     filter(!is.na(valor), !is.na(anio), cod_local == "41770 - Suaza")
-
-  brecha_sexo <- calcular_brechas(
-    data = suicidio,
-    var_estrato = sexo,
-    var_valor = valor,
-    grupo_ref = "Femenino",
-    grupo_comp = "Masculino",
-    var_anio = anio,
-    var_territorio = territorio,
-    territorios = c("Nacional", "Huila", "Suaza")
-  )
 
   # Create output directories
   csv_dir <- file.path(output_dir, "csv")
@@ -84,15 +70,11 @@ process_suicide <- function(output_dir = here("outputs")) {
   }
 
   # Save outputs
-  suicide_csv_file <- file.path(output_dir, "csv", "suicide_mortality.csv")
-  suicide_parquet_file <- file.path(output_dir, "parquet", "suicide_mortality.parquet")
-  gaps_csv_file <- file.path(output_dir, "csv", "suicide_mortality_gaps.csv")
-  gaps_parquet_file <- file.path(output_dir, "parquet", "suicide_mortality_gaps.parquet")
+  suicide_csv_file <- file.path(output_dir, "csv", "mortalidad-suicidio.csv")
+  suicide_parquet_file <- file.path(output_dir, "parquet", "mortalidad-suicidio.parquet")
 
   write_csv(suicidio, suicide_csv_file)
   write_parquet(suicidio, suicide_parquet_file)
-  write_csv(brecha_sexo, gaps_csv_file)
-  write_parquet(brecha_sexo, gaps_parquet_file)
 
   file.remove(temp_file)
 
@@ -101,12 +83,10 @@ process_suicide <- function(output_dir = here("outputs")) {
   message(glue("👤 Sex categories: {paste(unique(suicidio$sexo), collapse = ', ')}"))
   message(glue("💾 CSV:     {suicide_csv_file}"))
   message(glue("💾 Parquet: {suicide_parquet_file}"))
-  message(glue("💾 Gaps CSV: {gaps_csv_file}"))
-  message(glue("💾 Gaps Parquet: {gaps_parquet_file}"))
 
   return(list(
     data         = suicidio,
-    output_files = c(suicide_csv_file, suicide_parquet_file, gaps_csv_file, gaps_parquet_file)
+    output_files = c(suicide_csv_file, suicide_parquet_file)
   ))
 }
 

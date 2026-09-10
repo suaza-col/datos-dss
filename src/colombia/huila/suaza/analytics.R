@@ -63,7 +63,7 @@ load_indicator <- function(filename, col_name) {
 
 # ── 1. Load suicide mortality data (main focus indicator) ─────────────────────
 
-suicidio_raw <- read_parquet(file.path(output_dir, "parquet", "suicide_mortality.parquet"))
+suicidio_raw <- read_parquet(file.path(output_dir, "parquet", "mortalidad-suicidio.parquet"))
 
 suicidio <- suicidio_raw |>
   dplyr::filter(territorio == "Suaza", sexo == "Total") |>
@@ -71,17 +71,17 @@ suicidio <- suicidio_raw |>
 
 # ── 2. Load education indicators ───────────────────────────────────────────────
 
-cobertura_bruta_df <- load_indicator("education_cobertura_bruta.parquet", "cobertura_bruta")
-cobertura_neta_df <- load_indicator("education_cobertura_neta.parquet", "cobertura_neta")
-desercion_df <- load_indicator("education_desercion.parquet", "desercion")
-aprobacion_df <- load_indicator("education_aprobacion.parquet", "aprobacion")
-reprobacion_df <- load_indicator("education_reprobacion.parquet", "reprobacion")
-repitencia_df <- load_indicator("education_repitencia.parquet", "repitencia")
-formalidad_df <- load_indicator("formal_employment.parquet", "formalidad")
+cobertura_bruta_df <- load_indicator("cobertura-bruta.parquet", "cobertura_bruta")
+cobertura_neta_df <- load_indicator("cobertura-neta.parquet", "cobertura_neta")
+desercion_df <- load_indicator("desercion.parquet", "desercion")
+aprobacion_df <- load_indicator("aprobacion.parquet", "aprobacion")
+reprobacion_df <- load_indicator("reprobacion.parquet", "reprobacion")
+repitencia_df <- load_indicator("repitencia.parquet", "repitencia")
+formalidad_df <- load_indicator("formalidad.parquet", "formalidad")
 
 # ── 3. Load health insurance coverage (regimen == "Total") ────────────────────
 
-aseguramiento_df <- read_parquet(file.path(output_dir, "parquet", "health_insurance.parquet")) |>
+aseguramiento_df <- read_parquet(file.path(output_dir, "parquet", "aseguramiento.parquet")) |>
   dplyr::filter(regimen == "Total") |>
   dplyr::select(anio, aseguramiento = valor)
 
@@ -109,23 +109,38 @@ indicator_meta <- list(
   formalidad = "Cobertura de formalidad"
 )
 
-# ── 5. Forest plot: Spearman correlations across years, one row per indicator ─
+# ── 5. Forest plot: rolling-window Spearman correlations, one row per (anio, indicador) ─
+#
+# Suaza is a single territorial unit, so a within-year cross-sectional
+# correlation is not possible. Instead, for each year Y the indicator series is
+# correlated against the suicide series over a trailing window of
+# `window_years` calendar years (Y - window_years + 1 … Y). A (year, indicator)
+# pair with fewer than 4 complete observations in its window is silently
+# skipped (spearman_ci returns NA below n = 4).
 
-forest_rows <- lapply(names(indicator_meta), function(ind_key) {
-  vals <- dplyr::pull(all_data, ind_key)
-  res <- spearman_ci(vals, all_data$valor_suicidio)
-  if (is.na(res$rho)) {
-    return(NULL)
-  }
-  tibble::tibble(
-    indicador   = ind_key,
-    label       = indicator_meta[[ind_key]],
-    correlacion = res$rho,
-    ci_lower    = res$ci_lower,
-    ci_upper    = res$ci_upper,
-    p_value     = res$p_value,
-    n           = as.integer(res$n)
-  )
+window_years <- 5L
+
+available_years <- sort(unique(all_data$anio))
+
+forest_rows <- lapply(available_years, function(yr) {
+  win <- dplyr::filter(all_data, anio > yr - window_years, anio <= yr)
+  rows <- lapply(names(indicator_meta), function(ind_key) {
+    res <- spearman_ci(dplyr::pull(win, ind_key), win$valor_suicidio)
+    if (is.na(res$rho)) {
+      return(NULL)
+    }
+    tibble::tibble(
+      anio        = as.integer(yr),
+      indicador   = ind_key,
+      label       = indicator_meta[[ind_key]],
+      correlacion = res$rho,
+      ci_lower    = res$ci_lower,
+      ci_upper    = res$ci_upper,
+      p_value     = res$p_value,
+      n           = as.integer(res$n)
+    )
+  })
+  dplyr::bind_rows(rows)
 })
 
 suaza_forest_plot <- dplyr::bind_rows(forest_rows)
@@ -147,10 +162,10 @@ csv_dir <- file.path(output_dir, "csv")
 dir.create(parquet_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create(csv_dir, showWarnings = FALSE, recursive = TRUE)
 
-write_parquet(suaza_forest_plot, file.path(parquet_dir, "suaza_forest_plot.parquet"))
-write_parquet(suaza_analytics, file.path(parquet_dir, "suaza_analytics.parquet"))
+write_parquet(suaza_forest_plot, file.path(parquet_dir, "forest-plot.parquet"))
+write_parquet(suaza_analytics, file.path(parquet_dir, "analytics.parquet"))
 
-write_csv(suaza_forest_plot, file.path(csv_dir, "suaza_forest_plot.csv"))
-write_csv(suaza_analytics, file.path(csv_dir, "suaza_analytics.csv"))
+write_csv(suaza_forest_plot, file.path(csv_dir, "forest-plot.csv"))
+write_csv(suaza_analytics, file.path(csv_dir, "analytics.csv"))
 
 message("✅ suaza_forest_plot, suaza_analytics saved")

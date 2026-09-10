@@ -57,9 +57,11 @@ process_formal_employment <- function(output_dir = here("outputs")) {
     transmute(
       anio = as.numeric(Año),
       territorio = Entidad,
+      # Source (TerriData) expresses this indicator as a percentage (0-100).
+      # Convert to a proportion (0-1) for the dashboard.
       valor = as.numeric(
         gsub(",", ".", gsub("\\.", "", as.character(`Dato Numérico`)))
-      )
+      ) / 100
     ) |>
     filter(!is.na(anio), !is.na(valor)) |>
     arrange(territorio, anio)
@@ -69,8 +71,8 @@ process_formal_employment <- function(output_dir = here("outputs")) {
   dir_create(csv_dir)
   dir_create(parquet_dir)
 
-  csv_file <- file.path(csv_dir, "formal_employment.csv")
-  parquet_file <- file.path(parquet_dir, "formal_employment.parquet")
+  csv_file <- file.path(csv_dir, "formalidad.csv")
+  parquet_file <- file.path(parquet_dir, "formalidad.parquet")
 
   write_csv(formal_employment, csv_file)
   write_parquet(formal_employment, parquet_file)
